@@ -32,7 +32,7 @@ void UUMG_EditTask::Button_AcceptOnClick()
 	}
 	if (OnEditedFinish.IsBound())
 	{
-		OnEditedFinish.Broadcast(TaskData, Uumg_BasicTask.GetDefaultObject());
+		OnEditedFinish.Broadcast(TaskData, Uumg_BasicTask);
 	}
 }
 

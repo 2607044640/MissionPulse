@@ -22,7 +22,6 @@ class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 	void TaskFinish(FTaskData& InTaskData,UUMG_BasicTask* BasicTask);
 	UFUNCTION()
 	void Button_EditTaskOnClick();
-	void AddDynamicFuncToButton();
 	virtual void NativeConstruct() override;
 
 	UFUNCTION()
@@ -45,7 +44,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FTaskData TaskData;
 
-	int32 FieldUIDNum_0=0;
 public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_EditTask;

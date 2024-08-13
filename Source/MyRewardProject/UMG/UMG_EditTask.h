@@ -44,7 +44,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting, meta = (ExposeOnSpawn="true"))
 	FTaskData TaskData;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting, meta = (ExposeOnSpawn="true"))
-	TSubclassOf<UUMG_BasicTask> Uumg_BasicTask;
+	UUMG_BasicTask* Uumg_BasicTask;
 	
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_Accept;
