@@ -3,7 +3,7 @@
 
 #include "UMG_BasicTask.h"
 
-#include "UMG_Shop.h"
+#include "UMG_TasksContainer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "MyRewardProject/GameInstanceSubsystems/MyRewardGIS.h"
@@ -26,6 +26,7 @@ void UUMG_BasicTask::TaskFinish(FTaskData& InTaskData, UUMG_BasicTask* BasicTask
 
 void UUMG_BasicTask::Button_EditTaskOnClick()
 {
+	
 }
 
 void UUMG_BasicTask::NativeConstruct()

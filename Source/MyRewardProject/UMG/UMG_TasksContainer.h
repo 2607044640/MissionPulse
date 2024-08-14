@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "UMG_Shop.generated.h"
+#include "UMG_TasksContainer.generated.h"
 
 struct FTaskData;
 class UScrollBox;
@@ -15,7 +15,7 @@ class UTextBlock;
  * 
  */
 UCLASS()
-class MYREWARDPROJECT_API UUMG_Shop : public UUserWidget
+class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
 	UFUNCTION()
 	void ButtonAddTaskOnClick();

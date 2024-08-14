@@ -25,7 +25,7 @@ void UUMG_EditTask::EditableTextBox_ScoreOnTextChanged(const FText& Text)
 
 void UUMG_EditTask::Button_AcceptOnClick()
 {
-	if (!TaskData.MyStructIsValid())
+	if (!Uumg_BasicTask)
 	{
 		AddNewBasicTaskToEditTask();
 	}
@@ -38,7 +38,6 @@ void UUMG_EditTask::Button_AcceptOnClick()
 
 void UUMG_EditTask::EditedFinish(FTaskData& InTaskData, UUMG_BasicTask* InUumg_BasicTask)
 {
-	//内容复制到
 	InTaskData.Score = FCString::Atoi(*EditableTextBox_Score->GetText().ToString());
 	InTaskData.Days = FCString::Atoi(*EditableTextBox_Days->GetText().ToString());
 	InTaskData.Times = FCString::Atoi(*EditableTextBox_Times->GetText().ToString());

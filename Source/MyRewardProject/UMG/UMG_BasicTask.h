@@ -19,17 +19,15 @@ class UButton;
 UCLASS()
 class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 {
-	
 	void TaskFinish(FTaskData& InTaskData,UUMG_BasicTask* BasicTask);
+	
 	UFUNCTION()
 	void Button_EditTaskOnClick();
 	virtual void NativeConstruct() override;
-
 	UFUNCTION()
 	void Button_FinishOnClicked();
 
 	void AddScore(FTaskData& InTaskData,UUMG_BasicTask* BasicTask);
-
 
 public:
 	void RefreshUI();
@@ -42,6 +40,7 @@ public:
 	TaskStateChanged OnAddScore;
 	TaskStateChanged OnMinusScore;
 	TaskStateChanged OnTaskFinish;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FTaskData TaskData;
 

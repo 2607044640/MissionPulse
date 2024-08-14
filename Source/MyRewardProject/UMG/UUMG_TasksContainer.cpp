@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UMG_Shop.h"
+#include "UMG_TasksContainer.h"
 
 #include "UMG_BasicTask.h"
 #include "Components/Button.h"
@@ -9,23 +9,18 @@
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 
 
-void UUMG_Shop::TaskFinish(FTaskData& TaskData, UUMG_BasicTask* Uumg_BasicTask)
+void UUMG_TasksContainer::TaskFinish(FTaskData& TaskData, UUMG_BasicTask* Uumg_BasicTask)
 {
 	ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
 	ScrollBox_Tasks->RemoveChild(Uumg_BasicTask);
-
-	FString TempStr = FString::Printf(TEXT("Nice"));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-
 }
 
-void UUMG_Shop::ButtonAddTaskOnClick()
+void UUMG_TasksContainer::ButtonAddTaskOnClick()
 {
 	
 }
 
-void UUMG_Shop::NativeConstruct()
+void UUMG_TasksContainer::NativeConstruct()
 {
 	Super::NativeConstruct();
 
@@ -42,5 +37,5 @@ void UUMG_Shop::NativeConstruct()
 		
 	}
 
-	ButtonAddTask->OnClicked.AddDynamic(this, &UUMG_Shop::ButtonAddTaskOnClick);
+	ButtonAddTask->OnClicked.AddDynamic(this, &UUMG_TasksContainer::ButtonAddTaskOnClick);
 }
