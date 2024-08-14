@@ -38,7 +38,6 @@ void UUMG_BasicTask::NativeConstruct()
 	OnTaskFinish.AddUObject(this, &UUMG_BasicTask::TaskFinish);
 
 	
-	OnTaskFinish.AddUObject(UUMG_Shop::class, &UUMG_Shop::TaskFinish);
 	RefreshUI();
 }
 
