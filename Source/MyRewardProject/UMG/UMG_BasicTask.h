@@ -7,6 +7,7 @@
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_BasicTask.generated.h"
 
+struct FTaskData;
 class UTextBlock;
 class UUMG_BasicTask;
 DECLARE_MULTICAST_DELEGATE_TwoParams(TaskStateChanged, FTaskData& TaskData,UUMG_BasicTask* BasicTask)

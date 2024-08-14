@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_Shop.generated.h"
 
+struct FTaskData;
 class UScrollBox;
 class UUMG_BasicTask;
 class UButton;

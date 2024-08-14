@@ -49,8 +49,6 @@ void UUMG_EditTask::EditedFinish(FTaskData& InTaskData, UUMG_BasicTask* InUumg_B
 	InUumg_BasicTask->TaskData = InTaskData;
 
 	InUumg_BasicTask->RefreshUI();
-
-	RemoveFromParent();
 }
 
 void UUMG_EditTask::NativeConstruct()

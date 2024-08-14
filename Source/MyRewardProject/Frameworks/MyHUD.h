@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "MyRewardProject/UMG/UMG_MainUI.h"
 #include "MyHUD.generated.h"
 
+class UUMG_MainUI;
 /**
  * 
  */
