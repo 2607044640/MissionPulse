@@ -22,7 +22,11 @@ class MYREWARDPROJECT_API UUMG_Shop : public UUserWidget
 	virtual void NativeConstruct() override;
 
 public:
+	
 	void TaskFinish(FTaskData& TaskData, UUMG_BasicTask* Uumg_BasicTask);
+
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UButton* Button_Back;
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	UScrollBox* ScrollBox_Tasks;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
