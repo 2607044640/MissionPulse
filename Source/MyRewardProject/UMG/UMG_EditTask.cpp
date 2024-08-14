@@ -6,7 +6,6 @@
 #include "UMG_BasicTask.h"
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
-#include "Kismet/KismetStringLibrary.h"
 
 void UUMG_EditTask::EditableTextBox_ScoreOnTextChanged(const FText& Text)
 {
@@ -30,6 +29,7 @@ void UUMG_EditTask::Button_AcceptOnClick()
 	{
 		AddNewBasicTaskToEditTask();
 	}
+
 	if (OnEditedFinish.IsBound())
 	{
 		OnEditedFinish.Broadcast(TaskData, Uumg_BasicTask);
@@ -39,12 +39,15 @@ void UUMG_EditTask::Button_AcceptOnClick()
 void UUMG_EditTask::EditedFinish(FTaskData& InTaskData, UUMG_BasicTask* InUumg_BasicTask)
 {
 	//内容复制到
-	InTaskData.Score = UKismetStringLibrary::GetCharacterAsNumber(EditableTextBox_Score->GetText().ToString());
-	InTaskData.Days = UKismetStringLibrary::GetCharacterAsNumber(EditableTextBox_Days->GetText().ToString());
-	InTaskData.Times = UKismetStringLibrary::GetCharacterAsNumber(EditableTextBox_Times->GetText().ToString());
+	InTaskData.Score = FCString::Atoi(*EditableTextBox_Score->GetText().ToString());
+	InTaskData.Days = FCString::Atoi(*EditableTextBox_Days->GetText().ToString());
+	InTaskData.Times = FCString::Atoi(*EditableTextBox_Times->GetText().ToString());
+	InTaskData.SavedTimes = FCString::Atoi(*EditableTextBox_Times->GetText().ToString());
+
 	InTaskData.Title = EditableTextBox_Title->GetText().ToString();
 
 	InUumg_BasicTask->TaskData = InTaskData;
+
 	InUumg_BasicTask->RefreshUI();
 
 	RemoveFromParent();
@@ -67,5 +70,4 @@ void UUMG_EditTask::NativeConstruct()
 
 		EditableTextBox_Title->SetText(FText::FromString(TaskData.Title));
 	}
-	
 }

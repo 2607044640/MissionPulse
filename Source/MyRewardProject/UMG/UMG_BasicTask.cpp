@@ -3,6 +3,7 @@
 
 #include "UMG_BasicTask.h"
 
+#include "UMG_Shop.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "MyRewardProject/GameInstanceSubsystems/MyRewardGIS.h"
@@ -35,6 +36,9 @@ void UUMG_BasicTask::NativeConstruct()
 
 	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddScore);
 	OnTaskFinish.AddUObject(this, &UUMG_BasicTask::TaskFinish);
+
+	
+	OnTaskFinish.AddUObject(UUMG_Shop::class, &UUMG_Shop::TaskFinish);
 	RefreshUI();
 }
 

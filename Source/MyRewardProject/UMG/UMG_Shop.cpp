@@ -13,6 +13,11 @@ void UUMG_Shop::TaskFinish(FTaskData& TaskData, UUMG_BasicTask* Uumg_BasicTask)
 {
 	ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
 	ScrollBox_Tasks->RemoveChild(Uumg_BasicTask);
+
+	FString TempStr = FString::Printf(TEXT("Nice"));
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+
 }
 
 void UUMG_Shop::ButtonAddTaskOnClick()
@@ -34,7 +39,7 @@ void UUMG_Shop::NativeConstruct()
 		ScrollBox_Tasks->AddChild(BasicTask);
 		BasicTask->AddToViewport();
 
-		BasicTask->OnTaskFinish.AddUObject(this, &UUMG_Shop::TaskFinish);
+		
 	}
 
 	ButtonAddTask->OnClicked.AddDynamic(this, &UUMG_Shop::ButtonAddTaskOnClick);
