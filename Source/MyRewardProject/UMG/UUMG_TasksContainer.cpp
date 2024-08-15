@@ -33,8 +33,6 @@ void UUMG_TasksContainer::NativeConstruct()
 		BasicTask->TaskData = InTaskData;
 		ScrollBox_Tasks->AddChild(BasicTask);
 		BasicTask->AddToViewport();
-
-		
 	}
 
 	ButtonAddTask->OnClicked.AddDynamic(this, &UUMG_TasksContainer::ButtonAddTaskOnClick);

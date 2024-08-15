@@ -3,6 +3,7 @@
 
 #include "UMG_BasicTask.h"
 
+#include "UMG_BasicEditer.h"
 #include "UMG_TasksContainer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -14,16 +15,16 @@ void UUMG_BasicTask::TaskFinish(FTaskData& InTaskData, UUMG_BasicTask* BasicTask
 	Button_Finish->SetIsEnabled(false);
 }
 
-void UUMG_BasicTask::Button_EditTaskOnClick()
+void UUMG_BasicTask::SlotScoreOnEditFinish(FTaskData& InTaskData, UUMG_BasicTask* InUumg_BasicTask)
 {
 	
 }
+
 
 void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
 	Button_Finish->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnClicked);
-	Button_EditTask->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_EditTaskOnClick);
 
 	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddScore);
 	OnTaskFinish.AddUObject(this, &UUMG_BasicTask::TaskFinish);
@@ -38,7 +39,17 @@ void UUMG_BasicTask::NativeConstruct()
 			OnTaskFinish.Broadcast(TaskData,this);
 		}
 	}
+	
 	RefreshUI();
+
+	//
+	SlotTitle->TextBlock->SetText(FText::FromString(TaskData.Title));
+	SlotSavedTimes->TextBlock->SetText(FText::AsNumber(TaskData.SavedTimes));
+	SlotTimes->TextBlock->SetText(FText::AsNumber(TaskData.Times));
+	SlotDays->TextBlock->SetText(FText::AsNumber(TaskData.Days));
+	
+	SlotScore->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotScoreOnEditFinish);
+	
 }
 
 void UUMG_BasicTask::Button_FinishOnClicked()
@@ -55,9 +66,6 @@ void UUMG_BasicTask::AddScore(FTaskData& InTaskData, UUMG_BasicTask* BasicTask)
 	UMyRewardGIS* MyRewardGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMyRewardGIS>();
 	MyRewardGIS->AddScore(InTaskData.Score);
 	InTaskData.SavedTimes = InTaskData.SavedTimes - 1;
-	FString TempStr = FString::Printf(TEXT("%i"),InTaskData.SavedTimes);
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 
 	if (!InTaskData.SavedTimes)
 	{
@@ -71,9 +79,9 @@ void UUMG_BasicTask::AddScore(FTaskData& InTaskData, UUMG_BasicTask* BasicTask)
 
 void UUMG_BasicTask::RefreshUI()
 {
-	SlotTitle->SetText(FText::FromString(TaskData.Title));
-	SlotSavedTimes->SetText(FText::AsNumber(TaskData.SavedTimes));
-	SlotTimes->SetText(FText::AsNumber(TaskData.Times));
-	SlotDays->SetText(FText::AsNumber(TaskData.Days));
-	SlotScore->SetText(FText::AsNumber(TaskData.Score));
+	SlotTitle->TextBlock->SetText(FText::FromString(TaskData.Title));
+	SlotSavedTimes->TextBlock->SetText(FText::AsNumber(TaskData.SavedTimes));
+	SlotTimes->TextBlock->SetText(FText::AsNumber(TaskData.Times));
+	SlotDays->TextBlock->SetText(FText::AsNumber(TaskData.Days));
+	SlotScore->TextBlock->SetText(FText::AsNumber(TaskData.Score));
 }

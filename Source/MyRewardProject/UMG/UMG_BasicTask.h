@@ -7,6 +7,7 @@
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_BasicTask.generated.h"
 
+class UUMG_BasicEditer;
 struct FTaskData;
 class UTextBlock;
 class UUMG_BasicTask;
@@ -21,8 +22,7 @@ class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 {
 	void TaskFinish(FTaskData& InTaskData, UUMG_BasicTask* BasicTask);
 
-	UFUNCTION()
-	void Button_EditTaskOnClick();
+	void SlotScoreOnEditFinish(FTaskData& InTaskData, UUMG_BasicTask* InUumg_BasicTask);
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();
@@ -44,19 +44,17 @@ public:
 
 public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UButton* Button_EditTask;
-	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_Finish;
 
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UTextBlock* SlotTitle;
+	UUMG_BasicEditer* SlotTitle;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UTextBlock* SlotSavedTimes;
+	UUMG_BasicEditer* SlotSavedTimes;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UTextBlock* SlotTimes;
+	UUMG_BasicEditer* SlotTimes;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UTextBlock* SlotDays;
+	UUMG_BasicEditer* SlotDays;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UTextBlock* SlotScore;
+	UUMG_BasicEditer* SlotScore;
 	GENERATED_BODY()
 };
