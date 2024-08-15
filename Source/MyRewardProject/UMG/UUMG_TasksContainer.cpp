@@ -11,8 +11,10 @@
 
 void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
 {
-	ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
 	ScrollBox_Tasks->RemoveChild(Uumg_BasicTask);
+	Uumg_BasicTask->RemoveFromParent();
+	
+	ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
 }
 
 void UUMG_TasksContainer::ButtonAddTaskOnClick()

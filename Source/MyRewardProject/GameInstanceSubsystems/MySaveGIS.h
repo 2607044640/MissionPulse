@@ -22,9 +22,9 @@ struct FTaskData
 
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	int32 Days; // == 0 -> IsOnce
+	
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	int32 Times;
-
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	int32 SavedTimes; // == 0 -> IsFinish
 
