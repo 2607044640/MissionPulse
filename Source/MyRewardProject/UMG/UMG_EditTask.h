@@ -27,6 +27,7 @@ class MYREWARDPROJECT_API UUMG_EditTask : public UUserWidget
 	virtual void NativeConstruct() override;
 
 public:
+	
 	TaskStateChanged OnEditedFinish;
 
 	UFUNCTION(BlueprintImplementableEvent)

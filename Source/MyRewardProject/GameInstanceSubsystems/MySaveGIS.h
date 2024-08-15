@@ -28,7 +28,7 @@ struct FTaskData
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	int32 SavedTimes; // == 0 -> IsFinish
 
-	FTaskData():Days(INDEX_NONE)
+	FTaskData(): Days(INDEX_NONE)
 	{
 		Score = 1;
 		// Days = 0;
@@ -40,7 +40,7 @@ struct FTaskData
 		return Days != INDEX_NONE;
 	}
 
-	
+
 	GENERATED_USTRUCT_BODY()
 };
 
@@ -59,7 +59,6 @@ USTRUCT(BlueprintType)
 struct FGlobalData //todo Add to AllDataToSave
 {
 	GENERATED_USTRUCT_BODY()
-
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	float TotalScore;
 };
@@ -81,14 +80,14 @@ public:
 UCLASS()
 class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 {
-	
 	GENERATED_BODY()
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
 public:
 	FAllDataToSave Global_AllDataToSave;
 	UFUNCTION(BlueprintCallable, Category = "SaveData")
-	bool SaveData(const FString& Filename, FAllDataToSave AllDataToSave);
+	bool SaveData(FAllDataToSave AllDataToSave);
 
 	UFUNCTION(BlueprintCallable, Category = "LoadData")
-	bool LoadData(const FString& Filename, FAllDataToSave& AllDataToSave);
+	bool LoadData(FAllDataToSave& AllDataToSave);
 };

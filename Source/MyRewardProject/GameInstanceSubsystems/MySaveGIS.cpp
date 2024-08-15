@@ -9,10 +9,10 @@
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	LoadData(SaveDataFileName, Global_AllDataToSave);
+	LoadData(Global_AllDataToSave);
 }
 
-bool UMySaveGIS::SaveData(const FString& Filename, FAllDataToSave AllDataToSave)
+bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 {
 	TArray<TSharedPtr<FJsonValue>> JsonValues;
 
@@ -45,7 +45,7 @@ bool UMySaveGIS::SaveData(const FString& Filename, FAllDataToSave AllDataToSave)
 		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 
 		// Save the JSON string to a file
-		FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + Filename;
+		FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
 		if (FFileHelper::SaveStringToFile(JsonStr, *FilePath))
 		{
 			FString TempStr1 = FString::Printf(TEXT("File saved successfully at %s"), *FilePath);
@@ -58,9 +58,9 @@ bool UMySaveGIS::SaveData(const FString& Filename, FAllDataToSave AllDataToSave)
 	return false;
 }
 
-bool UMySaveGIS::LoadData(const FString& Filename, FAllDataToSave& AllDataToSave)
+bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 {
-	FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + Filename;
+	FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
 	FString Result;
 	if (FFileHelper::LoadFileToString(Result, *FilePath))
 	{
