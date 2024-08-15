@@ -4,33 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_BasicEditer.generated.h"
 
 class UTextBlock;
 class UEditableTextBox;
 class UUMG_BasicTask;
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(TaskStateChanged, FTaskData& TaskData, UUMG_BasicTask* BasicTask)
+DECLARE_MULTICAST_DELEGATE_TwoParams(OnTaskEditedChanged, UUMG_BasicTask* BasicTask,FText InText)
 /**
  * 
  */
 UCLASS()
 class MYREWARDPROJECT_API UUMG_BasicEditer : public UUserWidget
 {
+	
 	UFUNCTION()
 	void EditableTextBox_BasicOnTextChanged(const FText& Text);
 	UFUNCTION()
 	void EditableTextBox_BasicOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod);
+	
+	void ThisOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
 	virtual void NativeConstruct() override;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	FTaskData TaskData;
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPSaveAllData();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	UUMG_BasicTask* BasicTask;
 
-	TaskStateChanged OnEditFinish;
+	OnTaskEditedChanged OnEditFinish;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UTextBlock* TextBlock;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)

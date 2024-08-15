@@ -9,7 +9,7 @@
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 
 
-void UUMG_TasksContainer::TaskFinish(FTaskData& TaskData, UUMG_BasicTask* Uumg_BasicTask)
+void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
 {
 	ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
 	ScrollBox_Tasks->RemoveChild(Uumg_BasicTask);

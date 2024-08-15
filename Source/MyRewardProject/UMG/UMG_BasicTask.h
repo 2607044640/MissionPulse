@@ -9,9 +9,9 @@
 
 class UUMG_BasicEditer;
 struct FTaskData;
-class UTextBlock;
+
 class UUMG_BasicTask;
-DECLARE_MULTICAST_DELEGATE_TwoParams(TaskStateChanged, FTaskData& TaskData, UUMG_BasicTask* BasicTask)
+DECLARE_MULTICAST_DELEGATE_OneParam(TaskStateChanged, UUMG_BasicTask* BasicTask)
 
 class UButton;
 /**
@@ -20,14 +20,17 @@ class UButton;
 UCLASS()
 class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 {
-	void TaskFinish(FTaskData& InTaskData, UUMG_BasicTask* BasicTask);
+	void TaskFinish(UUMG_BasicTask* BasicTask);
 
-	void SlotScoreOnEditFinish(FTaskData& InTaskData, UUMG_BasicTask* InUumg_BasicTask);
+	void SlotScoreOnEditFinish(UUMG_BasicTask* InUumg_BasicTask,FText InText);
+	void SlotTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask,FText InText);
+	void SlotSavedTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask,FText InText);
+	void SlotTitleOnEditFinish(UUMG_BasicTask* Uumg_BasicTask,FText InText);
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();
 
-	void AddScore(FTaskData& InTaskData, UUMG_BasicTask* BasicTask);
+	void AddScore(UUMG_BasicTask* BasicTask);
 
 public:
 	void RefreshUI();
