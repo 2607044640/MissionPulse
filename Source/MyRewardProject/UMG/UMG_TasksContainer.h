@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "UMG_TasksContainer.generated.h"
 
+class UUMG_BasicEditer;
 class UScrollBox;
 class UUMG_BasicTask;
 class UButton;
@@ -21,9 +22,12 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	virtual void NativeConstruct() override;
 
 public:
-
+	
+	void TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask);
+	
 	void TaskFinish(UUMG_BasicTask* Uumg_BasicTask);
-
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UTextBlock* TextBlock_Score;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_Back;
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)

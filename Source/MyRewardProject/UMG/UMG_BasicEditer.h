@@ -27,8 +27,6 @@ class MYREWARDPROJECT_API UUMG_BasicEditer : public UUserWidget
 	virtual void NativeConstruct() override;
 
 public:
-	UFUNCTION(BlueprintImplementableEvent)
-	void BPSaveAllData();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	UUMG_BasicTask* BasicTask;
 

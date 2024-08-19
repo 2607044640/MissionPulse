@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UMG_TasksContainer.h"
 #include "Blueprint/UserWidget.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_BasicTask.generated.h"
@@ -22,25 +23,37 @@ class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 {
 	void TaskFinish(UUMG_BasicTask* BasicTask);
 
-	void SlotScoreOnEditFinish(UUMG_BasicTask* InUumg_BasicTask,FText InText);
-	void SlotTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask,FText InText);
-	void SlotSavedTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask,FText InText);
-	void SlotTitleOnEditFinish(UUMG_BasicTask* Uumg_BasicTask,FText InText);
+	void SlotScoreOnEditFinish(UUMG_BasicTask* InUumg_BasicTask, FText InText);
+	void SlotTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
+	void SlotSavedTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
+	void SlotTitleOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
+	void ButtonClicked(UUMG_BasicTask* Uumg_BasicTask);
+	void MinusScore(UUMG_BasicTask* Uumg_BasicTask);
+	void CheckPressedAddOrMinus();
+	UFUNCTION()
+	void Button_FinishOnPressed();
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();
+	void CheckIfTaskFinish();
 
 	void AddScore(UUMG_BasicTask* BasicTask);
 
 public:
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPOtherRefresh();
 	void RefreshUI();
 
 	UFUNCTION(BlueprintImplementableEvent)
+	void BPOnMinusScoreEffect();
+	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnAddScoreEffect();
 
+	TaskStateChanged OnButtonClicked;
 	TaskStateChanged OnAddScore;
 	TaskStateChanged OnMinusScore;
 	TaskStateChanged OnTaskFinish;
+	TaskStateChanged OnTaskNotFinish;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FTaskData TaskData;
@@ -48,7 +61,7 @@ public:
 public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_Finish;
-
+	
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_BasicEditer* SlotTitle;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
@@ -59,5 +72,18 @@ public:
 	UUMG_BasicEditer* SlotDays;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_BasicEditer* SlotScore;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	int32 bIsAddScore = true;
+	FTimerHandle CheckPressedAddOrMinusHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	float CheckPressedAddOrMinusRate = 0.5;
+	
+	UPROPERTY()
+	UMySaveGIS* MySaveGIS;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	UUMG_TasksContainer* TasksContainer;
+	
 	GENERATED_BODY()
 };

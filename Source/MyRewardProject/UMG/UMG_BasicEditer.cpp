@@ -29,7 +29,7 @@ void UUMG_BasicEditer::EditableTextBox_BasicOnTextChanged(const FText& Text)
 
 void UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod)
 {
-	if (OnEditFinish.IsBound() && BasicTask)
+	if (OnEditFinish.IsBound())
 	{
 		OnEditFinish.Broadcast(BasicTask, EditableTextBox_Basic->GetText());
 		TextBlock->SetText(EditableTextBox_Basic->GetText());
@@ -44,8 +44,8 @@ void UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted(const FText& Text, E
 
 void UUMG_BasicEditer::ThisOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
-	BPSaveAllData();
-
+	UMySaveGIS* MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
+	MySaveGIS->SaveAllData();
 }
 
 void UUMG_BasicEditer::NativeConstruct()

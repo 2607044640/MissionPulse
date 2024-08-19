@@ -3,7 +3,12 @@
 
 #include "MySaveGIS.h"
 
+#include "Components/ScrollBox.h"
 #include "MyRewardProject/MyRewardProject.h"
+#include "MyRewardProject/GetClasses/BFL_GetClasses.h"
+#include "MyRewardProject/UMG/UMG_BasicTask.h"
+#include "MyRewardProject/UMG/UMG_MainUI.h"
+#include "MyRewardProject/UMG/UMG_TasksContainer.h"
 
 
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
@@ -12,46 +17,92 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 	LoadData(Global_AllDataToSave);
 }
 
+void UMySaveGIS::AddChildToBasicDatum(UScrollBox* ScrollBox)
+{
+	for (UWidget*
+	     Child : ScrollBox->GetAllChildren())
+	{
+		UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child);
+		Global_AllDataToSave.TaskDatum.Add(UMG_BasicTask->TaskData);
+	}
+}
+
+void UMySaveGIS::SaveAllData()
+{
+	//Save To AllDataToSave
+	Global_AllDataToSave.TaskDatum.Empty();
+	UUMG_MainUI* MainUI = UBFL_GetClasses::GetMainUI(this);
+	AddChildToBasicDatum(MainUI->TasksContainer->ScrollBox_Tasks);
+	AddChildToBasicDatum(MainUI->TasksContainer->ScrollBox_Tasks_Finish);
+
+	SaveData(Global_AllDataToSave);
+}
+
+void UMySaveGIS::AddScore(float AddNum)
+{
+	Global_AllDataToSave.GlobalTotalScore += AddNum;
+}
+
+void UMySaveGIS::MinusScore(float MinusNum)
+{
+	Global_AllDataToSave.GlobalTotalScore -= MinusNum;
+}
+
+float UMySaveGIS::GetScore()
+{
+	return Global_AllDataToSave.GlobalTotalScore;
+}
+
 bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 {
-	TArray<TSharedPtr<FJsonValue>> JsonValues;
+	TSharedPtr<FJsonObject> MainJsonObject(new FJsonObject);
 
-	for (FTaskData
-		 TaskData : AllDataToSave.TaskDatum)
+	//TaskData
+	TArray<TSharedPtr<FJsonValue>> TaskDatumJsonValues;
+	for (const FTaskData& TaskData : AllDataToSave.TaskDatum)
 	{
-		TSharedPtr<FJsonObject> JsonObject(new FJsonObject);
+		TSharedPtr<FJsonObject> TaskObject(new FJsonObject);
 
-		JsonObject->SetStringField(TEXT("SortName"), TaskData.SortName);
+		TaskObject->SetStringField(TEXT("SortName"), TaskData.SortName);
+		TaskObject->SetStringField(TEXT("Title"), TaskData.Title);
+		TaskObject->SetStringField(TEXT("Detail"), TaskData.Detail);
+		TaskObject->SetNumberField(TEXT("Score"), TaskData.Score);
+		TaskObject->SetNumberField(TEXT("Days"), TaskData.Days);
+		TaskObject->SetNumberField(TEXT("Times"), TaskData.Times);
+		TaskObject->SetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
 
-		JsonObject->SetStringField(TEXT("Title"), TaskData.Title);
-		JsonObject->SetStringField(TEXT("Detail"), TaskData.Detail);
-
-		JsonObject->SetNumberField(TEXT("Score"), TaskData.Score);
-
-		JsonObject->SetNumberField(TEXT("Days"), TaskData.Days);
-		JsonObject->SetNumberField(TEXT("Times"), TaskData.Times);
-		
-		JsonObject->SetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
-
-		JsonValues.Add(MakeShareable(new FJsonValueObject(JsonObject)));
+		TaskDatumJsonValues.Add(MakeShareable(new FJsonValueObject(TaskObject)));
 	}
+	MainJsonObject->SetArrayField(TEXT("TaskData"), TaskDatumJsonValues);
+
+	//OtherData
+	TArray<TSharedPtr<FJsonValue>> OtherJsonValues;
+	TSharedPtr<FJsonObject> OtherJsonObject(new FJsonObject);
+
+	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
+	OtherJsonObject->SetNumberField(
+		TEXT("GlobalDailyTaskProgressRate"), Global_AllDataToSave.GlobalDailyTaskProgressRate);
+
+	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
+
+	MainJsonObject->SetArrayField(TEXT("OtherData"), OtherJsonValues);
+
+	// Serialize JSON object to a string
 	FString JsonStr;
 	TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&JsonStr);
 
-	if (FJsonSerializer::Serialize(JsonValues, JsonWriter))
+	if (FJsonSerializer::Serialize(MainJsonObject.ToSharedRef(), JsonWriter))
 	{
-		FString TempStr = FString::Printf(TEXT("%s"), *JsonStr);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, false);
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+		// if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, JsonStr, false);
+		// UE_LOG(LogTemp, Error, TEXT("%s"), *JsonStr);
 
 		// Save the JSON string to a file
 		FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
 		if (FFileHelper::SaveStringToFile(JsonStr, *FilePath))
 		{
-			FString TempStr1 = FString::Printf(TEXT("File saved successfully at %s"), *FilePath);
-			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr1, true);
-			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr1);
-
+			// FString TempStr1 = FString::Printf(TEXT("File saved successfully at %s"), *FilePath);
+			// if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr1, true);
+			// UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr1);
 			return true;
 		}
 	}
@@ -65,31 +116,76 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 	if (FFileHelper::LoadFileToString(Result, *FilePath))
 	{
 		TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Result);
-		TArray<TSharedPtr<FJsonValue>> JsonValues;
+		TSharedPtr<FJsonObject> JsonObject;
 
-		if (FJsonSerializer::Deserialize(JsonReader, JsonValues))
+		if (FJsonSerializer::Deserialize(JsonReader, JsonObject))
 		{
-			for (TSharedPtr<FJsonValue>
-			     JsonValue : JsonValues)
+			// Load task data
+			const TArray<TSharedPtr<FJsonValue>>* JsonValues;
+			if (JsonObject->TryGetArrayField(TEXT("TaskData"), JsonValues))
 			{
-				FTaskData TaskData;
-				TSharedPtr<FJsonObject> JsonObject = JsonValue->AsObject();
+				for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
+				{
+					if (TSharedPtr<FJsonObject> TaskObject = JsonValue->AsObject())
+					{
+						FTaskData TaskData;
+						TaskData.SortName = TaskObject->GetStringField(TEXT("SortName"));
+						TaskData.Title = TaskObject->GetStringField(TEXT("Title"));
+						TaskData.Detail = TaskObject->GetStringField(TEXT("Detail"));
+						TaskData.Score = TaskObject->GetNumberField(TEXT("Score"));
+						TaskData.Days = TaskObject->GetNumberField(TEXT("Days"));
+						TaskData.Times = TaskObject->GetNumberField(TEXT("Times"));
+						TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
 
-				TaskData.SortName = *JsonObject->GetStringField(TEXT("SortName"));
-				TaskData.Title = *JsonObject->GetStringField(TEXT("Title"));
-				TaskData.Detail = *JsonObject->GetStringField(TEXT("Detail"));
-
-				TaskData.Score = JsonObject->GetNumberField(TEXT("Score"));
-
-				TaskData.Days = JsonObject->GetNumberField(TEXT("Days"));
-				TaskData.Times = JsonObject->GetNumberField(TEXT("Times"));
-				
-				TaskData.SavedTimes = JsonObject->GetNumberField(TEXT("SavedTimes"));
-
-				AllDataToSave.TaskDatum.Add(TaskData);
+						AllDataToSave.TaskDatum.Add(TaskData);
+					}
+				}
 			}
+			if (JsonObject->TryGetArrayField(TEXT("OtherData"), JsonValues))
+			{
+				for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
+				{
+					if (TSharedPtr<FJsonObject> OtherObject = JsonValue->AsObject())
+					{
+						Global_AllDataToSave.GlobalTotalScore = OtherObject->GetNumberField(TEXT("GlobalTotalScore"));
+						Global_AllDataToSave.GlobalDailyTaskProgressRate = OtherObject->GetNumberField(
+							TEXT("GlobalDailyTaskProgressRate"));
+					}
+				}
+			}
+			return true;
 		}
-		return true;
 	}
 	return false;
 }
+
+/*
+{
+	"TaskData": [
+		{
+			"SortName": "afdg",
+			"Title": "htr",
+			"Detail": "hrt",
+			"Score": 1,
+			"Days": 34,
+			"Times": 54,
+			"SavedTimes": 1
+		},
+		{
+			"SortName": "h45",
+			"Title": "trh",
+			"Detail": "rh",
+			"Score": 3,
+			"Days": 0,
+			"Times": 3,
+			"SavedTimes": 1
+		}
+	],
+	"OtherData": [
+		{
+			"RewardTotalScore": -3,
+			"DailyTaskProgressRate": 0
+		}
+	]
+}
+*/

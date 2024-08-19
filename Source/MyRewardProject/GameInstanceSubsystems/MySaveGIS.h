@@ -6,6 +6,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "MySaveGIS.generated.h"
 
+class UScrollBox;
+
 USTRUCT(BlueprintType)
 struct FTaskData
 {
@@ -22,23 +24,20 @@ struct FTaskData
 
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	int32 Days; // == 0 -> IsOnce
-	
+
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	int32 Times;
 	UPROPERTY(EditAnywhere, Category=JFSetting)
 	int32 SavedTimes; // == 0 -> IsFinish
 
-	FTaskData(): Days(INDEX_NONE)
+	FTaskData()
 	{
 		Score = 1;
-		// Days = 0;
+		Days = 0;
 		Times = 1;
+		SavedTimes = 1;
 	}
 
-	bool MyStructIsValid() const
-	{
-		return Days != INDEX_NONE;
-	}
 
 
 	GENERATED_USTRUCT_BODY()
@@ -72,6 +71,10 @@ struct FAllDataToSave
 public:
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	TArray<FTaskData> TaskDatum;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	float GlobalTotalScore;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	float GlobalDailyTaskProgressRate;
 };
 
 /**
@@ -84,6 +87,17 @@ class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 public:
+	void AddChildToBasicDatum(UScrollBox* ScrollBox);
+
+	UFUNCTION(BlueprintCallable)
+	void SaveAllData();
+	UFUNCTION(BlueprintCallable)
+	void AddScore(float AddNum);
+	UFUNCTION(BlueprintCallable)
+	void MinusScore(float MinusNum);
+
+	UFUNCTION(BlueprintCallable,BlueprintPure)
+	float GetScore();
 	FAllDataToSave Global_AllDataToSave;
 	UFUNCTION(BlueprintCallable, Category = "SaveData")
 	bool SaveData(FAllDataToSave AllDataToSave);
