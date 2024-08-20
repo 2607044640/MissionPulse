@@ -3,6 +3,7 @@
 
 #include "MySaveGIS.h"
 
+#include "Components/ComboBoxString.h"
 #include "Components/ScrollBox.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/GetClasses/BFL_GetClasses.h"
@@ -17,8 +18,12 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 	LoadData(Global_AllDataToSave);
 }
 
-void UMySaveGIS::AddChildToBasicDatum(UScrollBox* ScrollBox)
+void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* ScrollBox)
 {
+	if (!ScrollBox->GetAllChildren().IsValidIndex(0))
+	{
+		return;
+	}
 	for (UWidget*
 	     Child : ScrollBox->GetAllChildren())
 	{
@@ -29,12 +34,12 @@ void UMySaveGIS::AddChildToBasicDatum(UScrollBox* ScrollBox)
 
 void UMySaveGIS::SaveAllData()
 {
-	//Save To AllDataToSave
-	Global_AllDataToSave.TaskDatum.Empty();
-	UUMG_MainUI* MainUI = UBFL_GetClasses::GetMainUI(this);
-	AddChildToBasicDatum(MainUI->TasksContainer->ScrollBox_Tasks);
-	AddChildToBasicDatum(MainUI->TasksContainer->ScrollBox_Tasks_Finish);
+	// Save To AllDataToSave	
+	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
 
+	Global_AllDataToSave.TaskDatum.Empty();
+	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks);
+	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks_Finish);
 	SaveData(Global_AllDataToSave);
 }
 
@@ -68,6 +73,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 		TaskObject->SetStringField(TEXT("Detail"), TaskData.Detail);
 		TaskObject->SetNumberField(TEXT("Score"), TaskData.Score);
 		TaskObject->SetNumberField(TEXT("Days"), TaskData.Days);
+		TaskObject->SetNumberField(TEXT("SavedDays"), TaskData.SavedDays);
 		TaskObject->SetNumberField(TEXT("Times"), TaskData.Times);
 		TaskObject->SetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
 
@@ -80,8 +86,8 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	TSharedPtr<FJsonObject> OtherJsonObject(new FJsonObject);
 
 	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
-	OtherJsonObject->SetNumberField(
-		TEXT("GlobalDailyTaskProgressRate"), Global_AllDataToSave.GlobalDailyTaskProgressRate);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), FDateTime::Now().GetDay());
 
 	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
 
@@ -93,9 +99,6 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 
 	if (FJsonSerializer::Serialize(MainJsonObject.ToSharedRef(), JsonWriter))
 	{
-		// if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, JsonStr, false);
-		// UE_LOG(LogTemp, Error, TEXT("%s"), *JsonStr);
-
 		// Save the JSON string to a file
 		FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
 		if (FFileHelper::SaveStringToFile(JsonStr, *FilePath))
@@ -134,6 +137,7 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 						TaskData.Detail = TaskObject->GetStringField(TEXT("Detail"));
 						TaskData.Score = TaskObject->GetNumberField(TEXT("Score"));
 						TaskData.Days = TaskObject->GetNumberField(TEXT("Days"));
+						TaskData.SavedDays = TaskObject->GetNumberField(TEXT("SavedDays"));
 						TaskData.Times = TaskObject->GetNumberField(TEXT("Times"));
 						TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
 
@@ -148,11 +152,18 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 					if (TSharedPtr<FJsonObject> OtherObject = JsonValue->AsObject())
 					{
 						Global_AllDataToSave.GlobalTotalScore = OtherObject->GetNumberField(TEXT("GlobalTotalScore"));
-						Global_AllDataToSave.GlobalDailyTaskProgressRate = OtherObject->GetNumberField(
-							TEXT("GlobalDailyTaskProgressRate"));
+						Global_AllDataToSave.GlobalDailyProgress = OtherObject->GetNumberField(
+							TEXT("GlobalDailyProgress"));
+						int32 TempLoad = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));
+						int32 TempDay = FDateTime::Now().GetDay();
+						if (TempLoad != TempDay && TempDay - TempLoad > 0)
+						{
+							AnotherDay = TempDay - TempLoad;
+						}
 					}
 				}
 			}
+
 			return true;
 		}
 	}

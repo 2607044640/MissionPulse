@@ -4,13 +4,10 @@
 #include "UMG_BasicTask.h"
 
 #include "UMG_BasicEditer.h"
-#include "UMG_MainUI.h"
 #include "UMG_TasksContainer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "MyRewardProject/Frameworks/MyHUD.h"
 
 
 class AMyHUD;
@@ -38,6 +35,16 @@ void UUMG_BasicTask::SlotSavedTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, 
 void UUMG_BasicTask::SlotTitleOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
 	TaskData.Title = InText.ToString();
+}
+
+void UUMG_BasicTask::SlotSavedDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
+{
+	TaskData.SavedDays = FCString::Atoi(*InText.ToString());
+}
+
+void UUMG_BasicTask::SlotDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
+{
+	TaskData.Days = FCString::Atoi(*InText.ToString());
 }
 
 void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
@@ -86,14 +93,13 @@ void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	
+
 	MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
 
 	//button
 	Button_Finish->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnClicked);
 	Button_Finish->OnPressed.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnPressed);
 
-	
 	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddScore);
 	OnMinusScore.AddUObject(this, &UUMG_BasicTask::MinusScore);
 	OnButtonClicked.AddUObject(this, &UUMG_BasicTask::ButtonClicked);
@@ -108,14 +114,16 @@ void UUMG_BasicTask::NativeConstruct()
 	SlotSavedTimes->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotSavedTimesOnEditFinish);
 	SlotTimes->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotTimesOnEditFinish);
 	SlotScore->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotScoreOnEditFinish);
+	SlotSavedDays->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotSavedDaysOnEditFinish);
+	SlotDays->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotDaysOnEditFinish);
 
 	FTimerHandle TempHandle;
 	GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UUMG_BasicTask::CheckIfTaskFinish, 0.2);
-	
+
 	RefreshUI();
 
-	FMargin Margin(5,10,200,10);
-	
+	FMargin Margin(5, 10, 200, 10);
+
 	SetPadding(Margin);
 }
 
@@ -161,6 +169,7 @@ void UUMG_BasicTask::RefreshUI()
 	SlotSavedTimes->TextBlock->SetText(FText::AsNumber(TaskData.SavedTimes));
 	SlotTimes->TextBlock->SetText(FText::AsNumber(TaskData.Times));
 	SlotDays->TextBlock->SetText(FText::AsNumber(TaskData.Days));
+	SlotSavedDays->TextBlock->SetText(FText::AsNumber(TaskData.SavedDays));
 	SlotScore->TextBlock->SetText(FText::AsNumber(TaskData.Score));
 	// AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
 	// MyHUD->MainUI->TasksContainer->SlotTotalScore->TextBlock->SetText(FText::AsNumber(MySaveGIS->GetScore()));
