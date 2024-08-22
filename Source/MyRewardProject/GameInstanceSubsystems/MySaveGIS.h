@@ -33,6 +33,9 @@ struct FTaskData
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	int32 SavedTimes; // == 0 -> IsFinish
 
+	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
+	bool bIsAddScore;
+
 	FTaskData()
 	{
 		Score = 1;
@@ -40,7 +43,6 @@ struct FTaskData
 		SavedDays = 0;
 		Times = 1;
 		SavedTimes = 1;
-		SortName = TEXT("Null");
 	}
 
 	bool operator==(const FTaskData& Other) const

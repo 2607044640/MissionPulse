@@ -36,7 +36,6 @@ void UMySaveGIS::SaveAllData()
 {
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
-
 	Global_AllDataToSave.TaskDatum.Empty();
 	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks);
 	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks_Finish);
@@ -76,6 +75,8 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 		TaskObject->SetNumberField(TEXT("SavedDays"), TaskData.SavedDays);
 		TaskObject->SetNumberField(TEXT("Times"), TaskData.Times);
 		TaskObject->SetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
+		
+		TaskObject->SetBoolField(TEXT("bIsAddScore"), TaskData.bIsAddScore);
 
 		TaskDatumJsonValues.Add(MakeShareable(new FJsonValueObject(TaskObject)));
 	}
@@ -88,6 +89,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), FDateTime::Now().GetDay());
+	
 
 	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
 
@@ -140,6 +142,8 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 						TaskData.SavedDays = TaskObject->GetNumberField(TEXT("SavedDays"));
 						TaskData.Times = TaskObject->GetNumberField(TEXT("Times"));
 						TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
+						
+						TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
 
 						AllDataToSave.TaskDatum.Add(TaskData);
 					}
@@ -174,28 +178,41 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 {
 	"TaskData": [
 		{
-			"SortName": "afdg",
-			"Title": "htr",
-			"Detail": "hrt",
+			"SortName": "Null",
+			"Title": "oijjjj",
+			"Detail": "",
 			"Score": 1,
-			"Days": 34,
-			"Times": 54,
+			"Days": 0,
+			"SavedDays": 0,
+			"Times": 1,
 			"SavedTimes": 1
 		},
 		{
-			"SortName": "h45",
-			"Title": "trh",
-			"Detail": "rh",
-			"Score": 3,
+			"SortName": "Null",
+			"Title": "aaaaaa",
+			"Detail": "",
+			"Score": 1,
 			"Days": 0,
-			"Times": 3,
-			"SavedTimes": 1
+			"SavedDays": 0,
+			"Times": 1,
+			"SavedTimes": 0
+		},
+		{
+			"SortName": "Null",
+			"Title": "333ffff32fffffffffffffof",
+			"Detail": "",
+			"Score": 1,
+			"Days": 2,
+			"SavedDays": 0,
+			"Times": 1,
+			"SavedTimes": 0
 		}
 	],
 	"OtherData": [
 		{
-			"RewardTotalScore": -3,
-			"DailyTaskProgressRate": 0
+			"GlobalTotalScore": 146,
+			"GlobalDailyProgress": 0,
+			"GlobalDayToRecord": 21
 		}
 	]
 }

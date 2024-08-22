@@ -35,6 +35,10 @@ class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 	void CheckPressedAddOrMinus();
 	UFUNCTION()
 	void Button_FinishOnPressed();
+	UFUNCTION()
+	void ButtonAddScoreOnClicked();
+	UFUNCTION()
+	void ButtonMinusScoreOnClicked();
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();
@@ -63,6 +67,10 @@ public:
 
 public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UButton* ButtonAddScore;
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite);
+	UButton* ButtonMinusScore;
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_Finish;
 
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
@@ -77,9 +85,13 @@ public:
 	UUMG_BasicEditer* SlotSavedDays;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_BasicEditer* SlotScore;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	bool TaskIsAddScore = true;
+	UFUNCTION(BlueprintCallable)
+	void SetbIsAddScore();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	int32 bIsAddScore = true;
+	bool IsAddTask = true;
 	FTimerHandle CheckPressedAddOrMinusHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)

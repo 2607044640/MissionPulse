@@ -7,6 +7,7 @@
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_TasksContainer.generated.h"
 
+class UImage;
 class UComboBoxString;
 class UUMG_BasicEditer;
 class UScrollBox;
@@ -27,28 +28,28 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	void TaskDataAddToTask(FTaskData InTaskData);
 	virtual void NativeConstruct() override;
 
-public:
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPDoTest();
 
-	
+
 	UFUNCTION(BlueprintCallable)
-	float NumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed=3.f, float LessThan = 0.2f);
-	TArray<FString> Global_SortNames;
+	float NumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed = 3.f, float LessThan = 0.2f);
 
 
 	void TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask);
 	void TaskFinish(UUMG_BasicTask* Uumg_BasicTask);
-	
+
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UComboBoxString* ComboBoxString_TasksClassification;
-	
+
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UTextBlock* TextBlock_Score;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_Back;
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UButton* Button_AddSortName;
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	UScrollBox* ScrollBox_Tasks;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)

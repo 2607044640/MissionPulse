@@ -7,6 +7,7 @@
 #include "UMG_TasksContainer.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Kismet/KismetStringLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 
@@ -50,7 +51,7 @@ void UUMG_BasicTask::SlotDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText 
 void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 {
 	UKismetSystemLibrary::K2_PauseTimerHandle(this, CheckPressedAddOrMinusHandle);
-	if (TaskData.SavedTimes && bIsAddScore)
+	if (TaskData.SavedTimes && IsAddTask)
 	{
 		if (OnAddScore.IsBound())
 		{
@@ -70,17 +71,41 @@ void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 	MySaveGIS->SaveAllData();
 }
 
+void UUMG_BasicTask::AddScore(UUMG_BasicTask* BasicTask)
+{
+	TaskData.SavedTimes = TaskData.SavedTimes - 1;
+
+	if (TaskIsAddScore)
+	{
+		MySaveGIS->AddScore(TaskData.Score);
+		BPOnAddScoreEffect();
+	}
+	else
+	{
+		MySaveGIS->MinusScore(TaskData.Score);
+		BPOnMinusScoreEffect();
+	}
+}
+
 void UUMG_BasicTask::MinusScore(UUMG_BasicTask* Uumg_BasicTask)
 {
-	bIsAddScore = true;
+	IsAddTask = true;
 	TaskData.SavedTimes = TaskData.SavedTimes + 1;
-	MySaveGIS->MinusScore(TaskData.Score);
-	BPOnMinusScoreEffect();
+	if (TaskIsAddScore)
+	{
+		MySaveGIS->MinusScore(TaskData.Score);
+		BPOnMinusScoreEffect();
+	}
+	else
+	{
+		MySaveGIS->AddScore(TaskData.Score);
+		BPOnAddScoreEffect();
+	}
 }
 
 void UUMG_BasicTask::CheckPressedAddOrMinus()
 {
-	bIsAddScore = false;
+	IsAddTask = false;
 }
 
 void UUMG_BasicTask::Button_FinishOnPressed()
@@ -89,26 +114,51 @@ void UUMG_BasicTask::Button_FinishOnPressed()
 	                                       CheckPressedAddOrMinusRate);
 }
 
+void UUMG_BasicTask::ButtonAddScoreOnClicked()
+{
+	int32 TempINT32 = FCString::Atoi(*SlotScore->TextBlock->GetText().ToString());
+	TempINT32++;
+	if (TempINT32 < 0)
+	{
+		TempINT32 = 0;
+	}
+	TaskData.Score = TempINT32;
+	RefreshUI();
+	MySaveGIS->SaveAllData();
+}
+
+void UUMG_BasicTask::ButtonMinusScoreOnClicked()
+{
+	int32 TempINT32 = FCString::Atoi(*SlotScore->TextBlock->GetText().ToString());
+	TempINT32--;
+	if (TempINT32 < 0)
+	{
+		TempINT32 = 0;
+	}
+	TaskData.Score = TempINT32;
+	RefreshUI();
+	MySaveGIS->SaveAllData();
+}
+
 void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-
-	MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
-
 	//button
 	Button_Finish->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnClicked);
 	Button_Finish->OnPressed.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnPressed);
-
 	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddScore);
 	OnMinusScore.AddUObject(this, &UUMG_BasicTask::MinusScore);
 	OnButtonClicked.AddUObject(this, &UUMG_BasicTask::ButtonClicked);
+	ButtonAddScore->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonAddScoreOnClicked);
+	ButtonMinusScore->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonMinusScoreOnClicked);
 
 	//finish
 	OnTaskFinish.AddUObject(this, &UUMG_BasicTask::TaskFinish);
 	TasksContainer = GetParent()->GetTypedOuter<UUMG_TasksContainer>();
 	OnTaskFinish.AddUObject(TasksContainer, &UUMG_TasksContainer::TaskFinish);
 	OnTaskNotFinish.AddUObject(TasksContainer, &UUMG_TasksContainer::TaskNotFinish);
+
 	//edit
 	SlotTitle->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotTitleOnEditFinish);
 	SlotSavedTimes->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotSavedTimesOnEditFinish);
@@ -117,13 +167,17 @@ void UUMG_BasicTask::NativeConstruct()
 	SlotSavedDays->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotSavedDaysOnEditFinish);
 	SlotDays->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotDaysOnEditFinish);
 
+	//Other
+	MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
+
+	TaskIsAddScore = TaskData.bIsAddScore;
+
 	FTimerHandle TempHandle;
 	GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UUMG_BasicTask::CheckIfTaskFinish, 0.2);
 
 	RefreshUI();
 
 	FMargin Margin(5, 10, 200, 10);
-
 	SetPadding(Margin);
 }
 
@@ -155,13 +209,6 @@ void UUMG_BasicTask::CheckIfTaskFinish()
 	}
 }
 
-void UUMG_BasicTask::AddScore(UUMG_BasicTask* BasicTask)
-{
-	TaskData.SavedTimes = TaskData.SavedTimes - 1;
-	MySaveGIS->AddScore(TaskData.Score);
-	BPOnAddScoreEffect();
-}
-
 
 void UUMG_BasicTask::RefreshUI()
 {
@@ -175,4 +222,10 @@ void UUMG_BasicTask::RefreshUI()
 	// MyHUD->MainUI->TasksContainer->SlotTotalScore->TextBlock->SetText(FText::AsNumber(MySaveGIS->GetScore()));
 
 	BPOtherRefresh();
+}
+
+void UUMG_BasicTask::SetbIsAddScore()
+{
+	TaskData.bIsAddScore = TaskIsAddScore;
+	MySaveGIS->SaveAllData();
 }

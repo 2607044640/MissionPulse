@@ -6,6 +6,7 @@
 #include "UMG_BasicTask.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
+#include "Components/Image.h"
 #include "Components/ScrollBox.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
@@ -30,7 +31,10 @@ void UUMG_TasksContainer::TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask)
 void UUMG_TasksContainer::ButtonAddTaskOnClick()
 {
 	UUMG_BasicTask* BasicTask = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), UIClass);
+	ScrollBox_Tasks->AddChild(BasicTask);
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
+	UMySaveGIS* MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
+	MySaveGIS->SaveAllData();
 }
 
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
@@ -83,7 +87,10 @@ void UUMG_TasksContainer::TaskDataAddToTask(FTaskData InTaskData)
 		BasicTask->TaskData.SavedDays -= TempDay;
 		if (BasicTask->TaskData.SavedDays < 0)
 		{
-			BasicTask->TaskData.SavedTimes = BasicTask->TaskData.Times;
+			if (BasicTask->TaskData.Days)
+			{
+				BasicTask->TaskData.SavedTimes = BasicTask->TaskData.Times;
+			}
 			BasicTask->TaskData.SavedDays = BasicTask->TaskData.Days;
 		}
 	}
@@ -101,11 +108,13 @@ void UUMG_TasksContainer::TaskDataAddToTask(FTaskData InTaskData)
 void UUMG_TasksContainer::NativeConstruct()
 {
 	Super::NativeConstruct();
-	//initail
-	Global_SortNames.Add(InitalName_AllTasks);
+	//Init
+	TArray<FString> Temp_SortNames;
+	Temp_SortNames.Add(InitalName_AllTasks);
 	ComboBoxString_TasksClassification->AddOption(InitalName_AllTasks);
 	ComboBoxString_TasksClassification->SetSelectedOption(InitalName_AllTasks);
 
+	//Bind Functions
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
 		this, &UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged);
 	ButtonAddTask->OnReleased.AddDynamic(this, &UUMG_TasksContainer::ButtonAddTaskOnClick);
@@ -117,7 +126,7 @@ void UUMG_TasksContainer::NativeConstruct()
 	{
 		bool TaskSortNameIsNew = true;
 		for (FString
-		     SortName : Global_SortNames)
+		     SortName : Temp_SortNames)
 		{
 			if (!InTaskData.SortName.Compare(SortName))
 			{
@@ -127,7 +136,7 @@ void UUMG_TasksContainer::NativeConstruct()
 
 		if (TaskSortNameIsNew)
 		{
-			Global_SortNames.Add(InTaskData.SortName);
+			Temp_SortNames.Add(InTaskData.SortName);
 			ComboBoxString_TasksClassification->AddOption(InTaskData.SortName);
 		}
 
