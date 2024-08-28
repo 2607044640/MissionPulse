@@ -14,6 +14,7 @@ UAsyncActionNode* UAsyncActionNode::MultiThreadedNode()
 
 void UAsyncActionNode::Activate()
 {
+	
 	(new FAutoDeleteAsyncTask<BP_NonAbandonableTask>(this))->StartBackgroundTask();
 }
 

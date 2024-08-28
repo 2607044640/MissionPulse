@@ -43,6 +43,7 @@ struct FTaskData
 		SavedDays = 0;
 		Times = 1;
 		SavedTimes = 1;
+		bIsAddScore = true;
 	}
 
 	bool operator==(const FTaskData& Other) const
@@ -92,6 +93,8 @@ public:
 	float GlobalTotalScore;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	float GlobalDailyProgress;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	float GlobalDailyProgress_Saved;
 	GENERATED_BODY()
 };
 

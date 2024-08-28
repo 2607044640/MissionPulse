@@ -33,6 +33,8 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	UUMG_BasicTask* BasicTask = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), UIClass);
 	ScrollBox_Tasks->AddChild(BasicTask);
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
+	BasicTask->TaskData.bIsAddScore=false;
+	
 	UMySaveGIS* MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
 	MySaveGIS->SaveAllData();
 }

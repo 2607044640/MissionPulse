@@ -6,7 +6,7 @@
 #include "Components/ComboBoxString.h"
 #include "Components/ScrollBox.h"
 #include "MyRewardProject/MyRewardProject.h"
-#include "MyRewardProject/GetClasses/BFL_GetClasses.h"
+#include "MyRewardProject/BlueprintFunctionLibraries/BFL_GetClasses.h"
 #include "MyRewardProject/UMG/UMG_BasicTask.h"
 #include "MyRewardProject/UMG/UMG_MainUI.h"
 #include "MyRewardProject/UMG/UMG_TasksContainer.h"
@@ -34,6 +34,10 @@ void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* ScrollBox)
 
 void UMySaveGIS::SaveAllData()
 {
+	FString TempStr = FString::Printf(TEXT("SaveData"));
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
 	Global_AllDataToSave.TaskDatum.Empty();
@@ -45,11 +49,16 @@ void UMySaveGIS::SaveAllData()
 void UMySaveGIS::AddScore(float AddNum)
 {
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
+	Global_AllDataToSave.GlobalDailyProgress += AddNum;
+	if (Global_AllDataToSave.GlobalDailyProgress>=Global_AllDataToSave.GlobalDailyProgress_Saved)
+	{
+	}
 }
 
 void UMySaveGIS::MinusScore(float MinusNum)
 {
 	Global_AllDataToSave.GlobalTotalScore -= MinusNum;
+	Global_AllDataToSave.GlobalDailyProgress -= MinusNum;
 }
 
 float UMySaveGIS::GetScore()
@@ -75,7 +84,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 		TaskObject->SetNumberField(TEXT("SavedDays"), TaskData.SavedDays);
 		TaskObject->SetNumberField(TEXT("Times"), TaskData.Times);
 		TaskObject->SetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
-		
+
 		TaskObject->SetBoolField(TEXT("bIsAddScore"), TaskData.bIsAddScore);
 
 		TaskDatumJsonValues.Add(MakeShareable(new FJsonValueObject(TaskObject)));
@@ -89,7 +98,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), FDateTime::Now().GetDay());
-	
+
 
 	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
 
@@ -142,7 +151,7 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 						TaskData.SavedDays = TaskObject->GetNumberField(TEXT("SavedDays"));
 						TaskData.Times = TaskObject->GetNumberField(TEXT("Times"));
 						TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
-						
+
 						TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
 
 						AllDataToSave.TaskDatum.Add(TaskData);
