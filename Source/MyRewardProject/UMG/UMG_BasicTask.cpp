@@ -247,7 +247,6 @@ UUMG_BasicTask* UUMG_BasicTask::CopySelf()
 		ThisWidget->TaskData = TaskData;
 		ThisWidget->RefreshUI();
 
-
 		return ThisWidget;
 	}
 
@@ -300,8 +299,7 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 		int32 TempIndex = ScreenPosition > OtherScreenPosition ? TempIndexfloat : TempIndexfloat + 1;
 		TempScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
 
-		
-		//todo bug swap tasks then save -> double tasks    
+
 		// 获取所有子控件
 		TArray<UWidget*> Children = TempScrollBox->GetAllChildren();
 
@@ -313,12 +311,16 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 			int32 IndexB = TempScrollBox->GetChildIndex(&B);
 			return IndexA < IndexB;
 		});
+
+
 		// 清空 ScrollBox 并重新添加子控件
 		TempScrollBox->ClearChildren();
 		for (UWidget* Child : Children)
 		{
 			TempScrollBox->AddChild(Child);
 		}
+
+		MySaveGIS->SaveAllData();
 	}
 
 	return false;

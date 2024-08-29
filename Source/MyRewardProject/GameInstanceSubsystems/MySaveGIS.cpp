@@ -48,6 +48,7 @@ void UMySaveGIS::AddScore(float AddNum)
 	Global_AllDataToSave.GlobalDailyProgress += AddNum;
 	if (Global_AllDataToSave.GlobalDailyProgress>=Global_AllDataToSave.GlobalDailyProgress_Saved)
 	{
+		//todo
 	}
 }
 
