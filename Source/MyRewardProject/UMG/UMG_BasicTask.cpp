@@ -269,6 +269,23 @@ void UUMG_BasicTask::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 
 	RemoveFromParent();
 }
+void UUMG_BasicTask::SortPanelWidgetsChildren(UPanelWidget* InPanelWidget)
+{
+	TArray<UWidget*> Children = InPanelWidget->GetAllChildren();
+
+	Children.Sort([InPanelWidget](const UWidget& A, const UWidget& B)
+	{
+		int32 IndexA = InPanelWidget->GetChildIndex(&A);
+		int32 IndexB = InPanelWidget->GetChildIndex(&B);
+		return IndexA < IndexB;
+	});
+
+	InPanelWidget->ClearChildren();
+	for (UWidget* Child : Children)
+	{
+		InPanelWidget->AddChild(Child);
+	}
+}
 
 bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
                                   UDragDropOperation* InOperation)
@@ -276,13 +293,11 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	if (UUMG_BasicTask* OtherBasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
 	{
 		//Check Which ScrollBox should be
-
 		UScrollBox* TempScrollBox = Parent_TasksContainer->ScrollBox_Tasks_Finish;
 		if (Parent_TasksContainer->ScrollBox_Tasks->HasChild(this))
 		{
 			TempScrollBox = Parent_TasksContainer->ScrollBox_Tasks;
 		}
-
 
 		//Check Higher Or Lower
 		FGeometry CachedGeometry = GetCachedGeometry();
@@ -297,28 +312,14 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 		int32 TempIndexfloat = TempScrollBox->GetChildIndex(this);
 
 		int32 TempIndex = ScreenPosition > OtherScreenPosition ? TempIndexfloat : TempIndexfloat + 1;
+		auto tempfstring = TempScrollBox->GetName();
+		
 		TempScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
 
 
-		// 获取所有子控件
-		TArray<UWidget*> Children = TempScrollBox->GetAllChildren();
-
 		//todo 这里可能写成一个Static Function
-		// 按照 ChildIndex 进行排序
-		Children.Sort([TempScrollBox](const UWidget& A, const UWidget& B)
-		{
-			int32 IndexA = TempScrollBox->GetChildIndex(&A);
-			int32 IndexB = TempScrollBox->GetChildIndex(&B);
-			return IndexA < IndexB;
-		});
 
-
-		// 清空 ScrollBox 并重新添加子控件
-		TempScrollBox->ClearChildren();
-		for (UWidget* Child : Children)
-		{
-			TempScrollBox->AddChild(Child);
-		}
+		SortPanelWidgetsChildren(TempScrollBox);
 
 		MySaveGIS->SaveAllData();
 	}
@@ -336,9 +337,6 @@ void UUMG_BasicTask::RefreshUI()
 	SlotScore->TextBlock->SetText(FText::AsNumber(TaskData.Score));
 
 	RefreshImage();
-	// AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-	// MyHUD->MainUI->TasksContainer->SlotTotalScore->TextBlock->SetText(FText::AsNumber(MySaveGIS->GetScore()));
-
 	BPOtherRefresh();
 }
 

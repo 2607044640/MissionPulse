@@ -122,8 +122,9 @@ public:
 	UUMG_BasicTask* CopySelf();
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
 									  UDragDropOperation*& OutOperation) override;
+	void SortPanelWidgetsChildren(UPanelWidget* InPanelWidget);
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-							  UDragDropOperation* InOperation) override;
+	                          UDragDropOperation* InOperation) override;
 	
 	void AddScore(UUMG_BasicTask* BasicTask);
 	virtual void NativeOnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
