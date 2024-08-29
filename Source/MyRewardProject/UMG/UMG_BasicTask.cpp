@@ -312,12 +312,9 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 		int32 TempIndexfloat = TempScrollBox->GetChildIndex(this);
 
 		int32 TempIndex = ScreenPosition > OtherScreenPosition ? TempIndexfloat : TempIndexfloat + 1;
-		auto tempfstring = TempScrollBox->GetName();
+
 		
 		TempScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
-
-
-		//todo 这里可能写成一个Static Function
 
 		SortPanelWidgetsChildren(TempScrollBox);
 
