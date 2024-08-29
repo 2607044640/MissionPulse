@@ -34,10 +34,6 @@ void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* ScrollBox)
 
 void UMySaveGIS::SaveAllData()
 {
-	FString TempStr = FString::Printf(TEXT("SaveData"));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
 	Global_AllDataToSave.TaskDatum.Empty();

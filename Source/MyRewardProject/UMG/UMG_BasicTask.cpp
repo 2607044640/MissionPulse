@@ -178,9 +178,9 @@ void UUMG_BasicTask::NativeConstruct()
 	if (!Parent_TasksContainer)
 	{
 		RemoveFromParent();
-		FString TempStr = FString::Printf(TEXT("None Parent_TasksContainer->RemoveFromParent"));
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+		FString teowjewo = FString::Printf(TEXT("None Parent_TasksContainer->RemoveFromParent"));
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, teowjewo, true, FVector2D(3, 3));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *teowjewo);
 	}
 
 	OnTaskFinish.AddUObject(Parent_TasksContainer, &UUMG_TasksContainer::TaskFinish);
@@ -277,8 +277,8 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	if (UUMG_BasicTask* OtherBasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
 	{
 		//Check Which ScrollBox should be
-		OtherBasicTask->IsCopiedWidget = true;
-		UScrollBox*& TempScrollBox = Parent_TasksContainer->ScrollBox_Tasks_Finish;
+
+		UScrollBox* TempScrollBox = Parent_TasksContainer->ScrollBox_Tasks_Finish;
 		if (Parent_TasksContainer->ScrollBox_Tasks->HasChild(this))
 		{
 			TempScrollBox = Parent_TasksContainer->ScrollBox_Tasks;
@@ -290,7 +290,7 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 		float ScreenPosition = CachedGeometry.GetAbsolutePosition().Y;
 
 		FVector2D MousePosition = InDragDropEvent.GetScreenSpacePosition() - OtherBasicTask->GetDesiredSize() / 2;
-		
+
 
 		float OtherScreenPosition = MousePosition.Y;
 
@@ -300,16 +300,12 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 		int32 TempIndex = ScreenPosition > OtherScreenPosition ? TempIndexfloat : TempIndexfloat + 1;
 		TempScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
 
-		FString TempStr = FString::Printf(TEXT("%f,%f, foweifw%i"), ScreenPosition, OtherScreenPosition, TempIndex);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-
 		
-
 		//todo bug swap tasks then save -> double tasks    
 		// 获取所有子控件
 		TArray<UWidget*> Children = TempScrollBox->GetAllChildren();
 
+		//todo 这里可能写成一个Static Function
 		// 按照 ChildIndex 进行排序
 		Children.Sort([TempScrollBox](const UWidget& A, const UWidget& B)
 		{
@@ -317,14 +313,8 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 			int32 IndexB = TempScrollBox->GetChildIndex(&B);
 			return IndexA < IndexB;
 		});
-
 		// 清空 ScrollBox 并重新添加子控件
-		
 		TempScrollBox->ClearChildren();
-		for (UWidget* Child : Children)
-		{
-			Child->RemoveFromParent();
-		}
 		for (UWidget* Child : Children)
 		{
 			TempScrollBox->AddChild(Child);
