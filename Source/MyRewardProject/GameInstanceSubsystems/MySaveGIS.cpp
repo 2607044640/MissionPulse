@@ -3,7 +3,6 @@
 
 #include "MySaveGIS.h"
 
-#include "Components/ComboBoxString.h"
 #include "Components/ScrollBox.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/BlueprintFunctionLibraries/BFL_GetClasses.h"
@@ -45,22 +44,47 @@ void UMySaveGIS::SaveAllData()
 void UMySaveGIS::AddScore(float AddNum)
 {
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
-	Global_AllDataToSave.GlobalDailyProgress += AddNum;
-	if (Global_AllDataToSave.GlobalDailyProgress>=Global_AllDataToSave.GlobalDailyProgress_Saved)
+	Global_AllDataToSave.GlobalDailyProgress_Saved += AddNum;
+
+	if (Global_AllDataToSave.GlobalDailyProgress <= Global_AllDataToSave.GlobalDailyProgress_Saved)
 	{
-		//todo
+		// Convert the values to integers if necessary (assuming they are floats and you want integer division)
+		const int32 SavedProgress = static_cast<int32>(Global_AllDataToSave.GlobalDailyProgress_Saved);
+		const int32 TotalProgress = static_cast<int32>(Global_AllDataToSave.GlobalDailyProgress);
+
+		// Calculate the quotient (how many times the divisor fits into the dividend)
+		int32 Quotient = Global_AllDataToSave.GlobalDailyProgress_Saved / Global_AllDataToSave.GlobalDailyProgress;
+
+		// Calculate the remainder (what's left after division)
+		// int32 Remainder = remainder(Global_AllDataToSave.GlobalDailyProgress_Saved,
+		                            // Global_AllDataToSave.GlobalDailyProgress);
+
+		for (int i = 0; i < Quotient; ++i)
+		{
+			Global_AllDataToSave.GlobalDailyProgress_Saved -= Global_AllDataToSave.GlobalDailyProgress;
+			Global_AllDataToSave.GlobalTotalScore += Global_AllDataToSave.DailyProgressRewardValue;
+		}
 	}
 }
 
 void UMySaveGIS::MinusScore(float MinusNum)
 {
 	Global_AllDataToSave.GlobalTotalScore -= MinusNum;
-	Global_AllDataToSave.GlobalDailyProgress -= MinusNum;
 }
 
 float UMySaveGIS::GetScore()
 {
 	return Global_AllDataToSave.GlobalTotalScore;
+}
+
+float UMySaveGIS::GetGlobalDailyProgress_Saved()
+{
+	return Global_AllDataToSave.GlobalDailyProgress_Saved;
+}
+
+float UMySaveGIS::GetDailyProgressRewardValue()
+{
+	return Global_AllDataToSave.DailyProgressRewardValue;
 }
 
 bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
@@ -92,9 +116,12 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	TArray<TSharedPtr<FJsonValue>> OtherJsonValues;
 	TSharedPtr<FJsonObject> OtherJsonObject(new FJsonObject);
 
+	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), FDateTime::Now().GetDay());
 	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
-	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), FDateTime::Now().GetDay());
+	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress_Saved"), Global_AllDataToSave.GlobalDailyProgress_Saved);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
+	OtherJsonObject->SetNumberField(TEXT("DailyProgressRewardValue"), Global_AllDataToSave.DailyProgressRewardValue);
 
 
 	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
@@ -162,13 +189,19 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 					if (TSharedPtr<FJsonObject> OtherObject = JsonValue->AsObject())
 					{
 						Global_AllDataToSave.GlobalTotalScore = OtherObject->GetNumberField(TEXT("GlobalTotalScore"));
+						Global_AllDataToSave.DailyProgressRewardValue = OtherObject->GetNumberField(
+							TEXT("DailyProgressRewardValue"));
 						Global_AllDataToSave.GlobalDailyProgress = OtherObject->GetNumberField(
 							TEXT("GlobalDailyProgress"));
-						int32 TempLoad = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));
-						int32 TempDay = FDateTime::Now().GetDay();
-						if (TempLoad != TempDay && TempDay - TempLoad > 0)
+						Global_AllDataToSave.GlobalDailyProgress_Saved = OtherObject->GetNumberField(
+							TEXT("GlobalDailyProgress_Saved"));
+
+						//AnotherDay calc
+						int32 TempDayPrevious = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));
+						int32 TempDayNow = FDateTime::Now().GetDay();
+						if (TempDayPrevious != TempDayNow && TempDayNow - TempDayPrevious > 0)
 						{
-							AnotherDay = TempDay - TempLoad;
+							AnotherDay = TempDayNow - TempDayPrevious;
 						}
 					}
 				}

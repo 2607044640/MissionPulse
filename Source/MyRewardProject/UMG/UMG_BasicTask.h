@@ -78,8 +78,6 @@ public:
 	UUMG_BasicEditer* SlotScore;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	bool TaskIsAddScore = true;
-
-
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	bool IsAddTask = true;
@@ -91,7 +89,7 @@ public:
 	UPROPERTY()
 	UMySaveGIS* MySaveGIS;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	UUMG_TasksContainer* Parent_TasksContainer;
+	UUMG_TasksContainer* ParentTasksContainer;
 
 
 
@@ -114,17 +112,16 @@ public:
 	void ButtonAddScoreOnClicked();
 	UFUNCTION()
 	void ButtonMinusScoreOnClicked();
+	
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();
 	void CheckIfTaskFinish();
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	UUMG_BasicTask* CopySelf();
+	
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
 									  UDragDropOperation*& OutOperation) override;
-	void SortPanelWidgetsChildren(UPanelWidget* InPanelWidget);
-	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	                          UDragDropOperation* InOperation) override;
 	
 	void AddScore(UUMG_BasicTask* BasicTask);
 	virtual void NativeOnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;

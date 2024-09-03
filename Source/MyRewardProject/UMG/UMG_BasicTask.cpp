@@ -154,6 +154,7 @@ void UUMG_BasicTask::ButtonMinusScoreOnClicked()
 	MySaveGIS->SaveAllData();
 }
 
+
 void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -174,8 +175,8 @@ void UUMG_BasicTask::NativeConstruct()
 	//finish
 	OnTaskFinish.AddUObject(this, &UUMG_BasicTask::TaskFinish);
 	AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-	Parent_TasksContainer = MyHUD->MainUI->TasksContainer;
-	if (!Parent_TasksContainer)
+	ParentTasksContainer = MyHUD->MainUI->TasksContainer;
+	if (!ParentTasksContainer)
 	{
 		RemoveFromParent();
 		FString teowjewo = FString::Printf(TEXT("None Parent_TasksContainer->RemoveFromParent"));
@@ -183,8 +184,8 @@ void UUMG_BasicTask::NativeConstruct()
 		UE_LOG(LogTemp, Error, TEXT("%s"), *teowjewo);
 	}
 
-	OnTaskFinish.AddUObject(Parent_TasksContainer, &UUMG_TasksContainer::TaskFinish);
-	OnTaskNotFinish.AddUObject(Parent_TasksContainer, &UUMG_TasksContainer::TaskNotFinish);
+	OnTaskFinish.AddUObject(ParentTasksContainer, &UUMG_TasksContainer::TaskFinish);
+	OnTaskNotFinish.AddUObject(ParentTasksContainer, &UUMG_TasksContainer::TaskNotFinish);
 
 	//edit
 	SlotTitle->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotTitleOnEditFinish);
@@ -200,10 +201,11 @@ void UUMG_BasicTask::NativeConstruct()
 	FTimerHandle TempHandle;
 	GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UUMG_BasicTask::CheckIfTaskFinish, 0.2);
 
-	RefreshUI();
 
 	FMargin Margin(5, 0, 200, 0);
 	SetPadding(Margin);
+
+	RefreshUI();
 }
 
 
@@ -241,7 +243,7 @@ FReply UUMG_BasicTask::NativeOnMouseButtonDown(const FGeometry& InGeometry, cons
 
 UUMG_BasicTask* UUMG_BasicTask::CopySelf()
 {
-	if (auto ThisWidget = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), Parent_TasksContainer->UIClass))
+	if (auto ThisWidget = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), ParentTasksContainer->UIClass))
 	{
 		ThisWidget->IsCopiedWidget = true;
 		ThisWidget->TaskData = TaskData;
@@ -269,60 +271,7 @@ void UUMG_BasicTask::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 
 	RemoveFromParent();
 }
-void UUMG_BasicTask::SortPanelWidgetsChildren(UPanelWidget* InPanelWidget)
-{
-	TArray<UWidget*> Children = InPanelWidget->GetAllChildren();
 
-	Children.Sort([InPanelWidget](const UWidget& A, const UWidget& B)
-	{
-		int32 IndexA = InPanelWidget->GetChildIndex(&A);
-		int32 IndexB = InPanelWidget->GetChildIndex(&B);
-		return IndexA < IndexB;
-	});
-
-	InPanelWidget->ClearChildren();
-	for (UWidget* Child : Children)
-	{
-		InPanelWidget->AddChild(Child);
-	}
-}
-
-bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-                                  UDragDropOperation* InOperation)
-{
-	if (UUMG_BasicTask* OtherBasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
-	{
-		//Check Which ScrollBox should be
-		UScrollBox* TempScrollBox = Parent_TasksContainer->ScrollBox_Tasks_Finish;
-		if (Parent_TasksContainer->ScrollBox_Tasks->HasChild(this))
-		{
-			TempScrollBox = Parent_TasksContainer->ScrollBox_Tasks;
-		}
-
-		//Check Higher Or Lower
-		FGeometry CachedGeometry = GetCachedGeometry();
-		float ScreenPosition = CachedGeometry.GetAbsolutePosition().Y;
-
-		FVector2D MousePosition = InDragDropEvent.GetScreenSpacePosition() - OtherBasicTask->GetDesiredSize() / 2;
-
-
-		float OtherScreenPosition = MousePosition.Y;
-
-		//Set Higher Or Lower By Index
-		int32 TempIndexfloat = TempScrollBox->GetChildIndex(this);
-
-		int32 TempIndex = ScreenPosition > OtherScreenPosition ? TempIndexfloat : TempIndexfloat + 1;
-
-		
-		TempScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
-
-		SortPanelWidgetsChildren(TempScrollBox);
-
-		MySaveGIS->SaveAllData();
-	}
-
-	return false;
-}
 
 void UUMG_BasicTask::RefreshUI()
 {

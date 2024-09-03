@@ -53,10 +53,12 @@ void UUMG_BasicEditer::NativeConstruct()
 	Super::NativeConstruct();
 	EditableTextBox_Basic->OnTextChanged.AddDynamic(this, &UUMG_BasicEditer::EditableTextBox_BasicOnTextChanged);
 	EditableTextBox_Basic->OnTextCommitted.AddDynamic(this, &UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted);
-	
+
 	OnEditFinish.AddUObject(this, &UUMG_BasicEditer::ThisOnEditFinish);
 
 	//get data from parent
-	UUMG_BasicTask* OwningWidget = GetParent()->GetTypedOuter<UUMG_BasicTask>();
-	BasicTask = OwningWidget;
+	if (UUMG_BasicTask* OwningWidget = GetParent()->GetTypedOuter<UUMG_BasicTask>())
+	{
+		BasicTask = OwningWidget;
+	}
 }
