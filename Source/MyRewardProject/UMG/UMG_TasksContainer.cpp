@@ -12,6 +12,7 @@
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "MyRewardProject/MyRewardProject.h"
+#include "MyRewardProject/BlueprintFunctionLibraries/BFL_FunctionUtilities.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 
 
@@ -228,20 +229,17 @@ void UUMG_TasksContainer::NativeConstruct()
 		TaskDataAddToTask(InTaskData);
 	}
 
-	FNumberFormattingOptions* NumberFormattingOptions = new FNumberFormattingOptions();
-	NumberFormattingOptions->SetUseGrouping(false);
-	FText TempText = FText::AsNumber(MySaveGIS->Global_AllDataToSave.GlobalTotalScore, NumberFormattingOptions);
-	
+
 	//Init UI
-	TextBlock_Score->SetText(TempText);
+	TextBlock_Score->SetText(
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalTotalScore));
 	TextBlock_GlobalDailyProgress_Saved->SetText(
-		FText::AsNumber(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress_Saved));
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress_Saved));
 	BasicEditer_GlobalDailyProgress->TextBlock->SetText(
-		FText::AsNumber(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress));
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress));
 	BasicEditer_DailyProgressRewardValue->TextBlock->SetText(
-		FText::AsNumber(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
-
-
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
+	
 	MySaveGIS->SaveAllData();
 }
 
@@ -300,19 +298,6 @@ bool UUMG_TasksContainer::NativeOnDragOver(const FGeometry& InGeometry, const FD
 	return Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
 }
 
-
-float UUMG_TasksContainer::NumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed, float LessThan)
-{
-	if (FMath::Abs(Number - SavedNumber) < LessThan)
-	{
-		BPDoClearHandle();
-		return FMath::RoundToInt32(Speed / 100.f * (SavedNumber > Number ? 1 : -1) + Number);
-	}
-	else
-	{
-		return Speed / 100.f * (SavedNumber > Number ? 1 : -1) + Number;
-	}
-}
 
 int32 UUMG_TasksContainer::CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget)
 {

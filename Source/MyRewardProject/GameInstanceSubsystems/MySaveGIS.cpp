@@ -57,7 +57,7 @@ void UMySaveGIS::AddScore(float AddNum)
 
 		// Calculate the remainder (what's left after division)
 		// int32 Remainder = remainder(Global_AllDataToSave.GlobalDailyProgress_Saved,
-		                            // Global_AllDataToSave.GlobalDailyProgress);
+		// Global_AllDataToSave.GlobalDailyProgress);
 
 		for (int i = 0; i < Quotient; ++i)
 		{
@@ -100,7 +100,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 		TaskObject->SetStringField(TEXT("SortName"), TaskData.SortName);
 		TaskObject->SetStringField(TEXT("Title"), TaskData.Title);
 		TaskObject->SetStringField(TEXT("Detail"), TaskData.Detail);
-		TaskObject->SetNumberField(TEXT("Score"), TaskData.Score);
+		TaskObject->SetNumberField(TEXT("Score"), (int32)TaskData.Score);
 		TaskObject->SetNumberField(TEXT("Days"), TaskData.Days);
 		TaskObject->SetNumberField(TEXT("SavedDays"), TaskData.SavedDays);
 		TaskObject->SetNumberField(TEXT("Times"), TaskData.Times);

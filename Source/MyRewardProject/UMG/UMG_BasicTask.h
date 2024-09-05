@@ -51,7 +51,7 @@ public:
 	FLinearColor GoldColor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FLinearColor RedGoldColor;
-	bool IsCopiedWidget;
+	bool bIsCopiedWidget;
 
 	UFUNCTION()
 	FEventReply OnImageClicked(FGeometry MyGeometry, const FPointerEvent& MouseEvent);
@@ -77,10 +77,10 @@ public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_BasicEditer* SlotScore;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	bool TaskIsAddScore = true;
+	bool bTaskIsAddScore = true;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	bool IsAddTask = true;
+	bool bIsAddTask = true;
 	FTimerHandle CheckPressedAddOrMinusHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)

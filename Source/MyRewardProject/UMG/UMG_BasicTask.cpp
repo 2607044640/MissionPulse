@@ -13,6 +13,7 @@
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "MyRewardProject/BlueprintFunctionLibraries/BFL_FunctionUtilities.h"
 #include "MyRewardProject/Frameworks/MyHUD.h"
 
 
@@ -57,7 +58,7 @@ void UUMG_BasicTask::SlotDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText 
 void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 {
 	UKismetSystemLibrary::K2_PauseTimerHandle(this, CheckPressedAddOrMinusHandle);
-	if (TaskData.SavedTimes && IsAddTask)
+	if (TaskData.SavedTimes && bIsAddTask)
 	{
 		if (OnAddScore.IsBound())
 		{
@@ -103,7 +104,7 @@ void UUMG_BasicTask::NativeOnDragEnter(const FGeometry& InGeometry, const FDragD
 
 void UUMG_BasicTask::MinusScore(UUMG_BasicTask* Uumg_BasicTask)
 {
-	IsAddTask = true;
+	bIsAddTask = true;
 	TaskData.SavedTimes = TaskData.SavedTimes + 1;
 	if (TaskData.bIsAddScore)
 	{
@@ -119,7 +120,7 @@ void UUMG_BasicTask::MinusScore(UUMG_BasicTask* Uumg_BasicTask)
 
 void UUMG_BasicTask::CheckPressedAddOrMinus()
 {
-	IsAddTask = false;
+	bIsAddTask = false;
 }
 
 void UUMG_BasicTask::Button_FinishOnPressed()
@@ -159,7 +160,7 @@ void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (IsCopiedWidget) return;
+	if (bIsCopiedWidget) return;
 
 	//button
 	Image_Coin->OnMouseButtonDownEvent.BindUFunction(this,TEXT("OnImageClicked"));
@@ -200,10 +201,8 @@ void UUMG_BasicTask::NativeConstruct()
 
 	FTimerHandle TempHandle;
 	GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UUMG_BasicTask::CheckIfTaskFinish, 0.2);
-
-
-	FMargin Margin(5, 0, 200, 0);
-	SetPadding(Margin);
+	
+	SetPadding(FMargin(5, 0, 200, 0));
 
 	RefreshUI();
 }
@@ -245,7 +244,7 @@ UUMG_BasicTask* UUMG_BasicTask::CopySelf()
 {
 	if (auto ThisWidget = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), ParentTasksContainer->UIClass))
 	{
-		ThisWidget->IsCopiedWidget = true;
+		ThisWidget->bIsCopiedWidget = true;
 		ThisWidget->TaskData = TaskData;
 		ThisWidget->RefreshUI();
 
@@ -276,11 +275,11 @@ void UUMG_BasicTask::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 void UUMG_BasicTask::RefreshUI()
 {
 	SlotTitle->TextBlock->SetText(FText::FromString(TaskData.Title));
-	SlotSavedTimes->TextBlock->SetText(FText::AsNumber(TaskData.SavedTimes));
-	SlotTimes->TextBlock->SetText(FText::AsNumber(TaskData.Times));
-	SlotDays->TextBlock->SetText(FText::AsNumber(TaskData.Days));
-	SlotSavedDays->TextBlock->SetText(FText::AsNumber(TaskData.SavedDays));
-	SlotScore->TextBlock->SetText(FText::AsNumber(TaskData.Score));
+	SlotSavedTimes->TextBlock->SetText(UBFL_FunctionUtilities::JFFloatToText(TaskData.SavedTimes));
+	SlotTimes->TextBlock->SetText(UBFL_FunctionUtilities::JFFloatToText(TaskData.Times));
+	SlotDays->TextBlock->SetText(UBFL_FunctionUtilities::JFFloatToText(TaskData.Days));
+	SlotSavedDays->TextBlock->SetText(UBFL_FunctionUtilities::JFFloatToText(TaskData.SavedDays));
+	SlotScore->TextBlock->SetText(UBFL_FunctionUtilities::JFFloatToText(TaskData.Score));
 
 	RefreshImage();
 	BPOtherRefresh();

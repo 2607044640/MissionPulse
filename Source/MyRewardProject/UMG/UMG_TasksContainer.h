@@ -40,10 +40,7 @@ public:
 	
 	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 	                              UDragDropOperation* InOperation) override;
-	UFUNCTION(BlueprintImplementableEvent)
-	void BPDoClearHandle();
-	UFUNCTION(BlueprintCallable)
-	float NumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed = 3.f, float LessThan = 0.2f);
+	
 	int32 CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget);
 
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
@@ -58,8 +55,7 @@ public:
 
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UTextBlock* TextBlock_Score;
-	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UButton* Button_Back;
+	
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_AddSortName;
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
