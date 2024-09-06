@@ -32,7 +32,9 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	virtual void NativeConstruct() override;
 
 public:
-
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPOnFinishDailyProgress();
+	
 	UFUNCTION(BlueprintCallable)
 	FString FloatToText(float Input);
 	UFUNCTION(BlueprintCallable)
@@ -42,9 +44,6 @@ public:
 	                              UDragDropOperation* InOperation) override;
 	
 	int32 CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget);
-
-	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	                          UDragDropOperation* InOperation) override;
 	void SortPanelWidgetsChildren(UPanelWidget* InPanelWidget);
 
 	void TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask);
@@ -74,5 +73,7 @@ public:
 	TSubclassOf<UUMG_BasicTask> UIClass;
 	UPROPERTY()
 	UMySaveGIS* MySaveGIS;
+
+	
 	GENERATED_BODY()
 };

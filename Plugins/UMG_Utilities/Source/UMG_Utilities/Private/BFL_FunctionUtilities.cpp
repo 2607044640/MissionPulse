@@ -2,7 +2,6 @@
 
 
 #include "BFL_FunctionUtilities.h"
-
 #include "Blueprint/SlateBlueprintLibrary.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
@@ -166,7 +165,8 @@ AActor* UBFL_FunctionUtilities::JFSpawnActorAtWidgetWorldPosition(UObject* World
 	return nullptr;
 }
 
-float UBFL_FunctionUtilities::JFNumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed, float LessThan)
+float UBFL_FunctionUtilities::JFNumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed,
+                                                            float LessThan)
 {
 	if (FMath::Abs(Number - SavedNumber) < LessThan)
 	{
@@ -184,4 +184,16 @@ FText UBFL_FunctionUtilities::JFFloatToText(float InputFloat)
 	NumberFormattingOptions->SetUseGrouping(false);
 	NumberFormattingOptions->MaximumFractionalDigits = 2;
 	return FText::AsNumber(InputFloat, NumberFormattingOptions);
+}
+
+FVector2D UBFL_FunctionUtilities::JFGetWidgetViewPortPosition(UObject* WorldContextObject, UWidget* Widget)
+{
+	FGeometry WidgetGeometry = Widget->GetCachedGeometry();
+	FVector2D LocalCoordinate(0, 0);
+	FVector2D PixelPosition;
+	FVector2D ViewportPosition;
+	USlateBlueprintLibrary::LocalToViewport
+		(WorldContextObject, WidgetGeometry, LocalCoordinate, PixelPosition, ViewportPosition);
+
+	return ViewportPosition;
 }

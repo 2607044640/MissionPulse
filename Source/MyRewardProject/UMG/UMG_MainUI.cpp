@@ -3,7 +3,20 @@
 
 #include "UMG_MainUI.h"
 
+#include "UMG_BasicTask.h"
+#include "Blueprint/DragDropOperation.h"
+
 void UUMG_MainUI::NativeConstruct()
 {
 	Super::NativeConstruct();
+}
+
+bool UUMG_MainUI::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
+                               UDragDropOperation* InOperation)
+{
+	if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
+	{
+		UMG_BasicTask->BPOnDrop();
+	}
+	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 }

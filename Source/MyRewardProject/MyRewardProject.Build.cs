@@ -9,9 +9,11 @@ public class MyRewardProject : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[]
-			{ "Core", "CoreUObject", "Engine", "InputCore", "UMG", "SlateCore", "Slate", "Json", "JsonUtilities" });
+		{
+			"Core", "CoreUObject", "Engine", "InputCore", "UMG", "SlateCore", "Slate", "Json", "JsonUtilities","UMG_Utilities"
+		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG_Utilities" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

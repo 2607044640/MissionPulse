@@ -3,17 +3,16 @@
 
 #include "UMG_BasicTask.h"
 
+#include "BFL_FunctionUtilities.h"
 #include "UMG_BasicEditer.h"
 #include "UMG_MainUI.h"
 #include "UMG_TasksContainer.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
-#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "MyRewardProject/BlueprintFunctionLibraries/BFL_FunctionUtilities.h"
 #include "MyRewardProject/Frameworks/MyHUD.h"
 
 
@@ -201,7 +200,7 @@ void UUMG_BasicTask::NativeConstruct()
 
 	FTimerHandle TempHandle;
 	GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UUMG_BasicTask::CheckIfTaskFinish, 0.2);
-	
+
 	SetPadding(FMargin(5, 0, 200, 0));
 
 	RefreshUI();
@@ -240,23 +239,30 @@ FReply UUMG_BasicTask::NativeOnMouseButtonDown(const FGeometry& InGeometry, cons
 	return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
 }
 
-UUMG_BasicTask* UUMG_BasicTask::CopySelf()
+bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
+                                  UDragDropOperation* InOperation)
 {
-	if (auto ThisWidget = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), ParentTasksContainer->UIClass))
-	{
-		ThisWidget->bIsCopiedWidget = true;
-		ThisWidget->TaskData = TaskData;
-		ThisWidget->RefreshUI();
-
-		return ThisWidget;
-	}
-
-	FString ewg = FString::Printf(TEXT("CopySelf Not Valid"));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, ewg, false);
-	UE_LOG(LogTemp, Error, TEXT("%s"), *ewg);
-
-	return nullptr;
+	BPOnDrop();
+	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 }
+
+// UUMG_BasicTask* UUMG_BasicTask::CopySelf()
+// {
+// 	if (auto ThisWidget = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), ParentTasksContainer->UIClass))
+// 	{
+// 		ThisWidget->bIsCopiedWidget = true;
+// 		ThisWidget->TaskData = TaskData;
+// 		ThisWidget->RefreshUI();
+//
+// 		return ThisWidget;
+// 	}
+//
+// 	FString ewg = FString::Printf(TEXT("CopySelf Not Valid"));
+// 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, ewg, false);
+// 	UE_LOG(LogTemp, Error, TEXT("%s"), *ewg);
+//
+// 	return nullptr;
+// }
 
 void UUMG_BasicTask::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
                                           UDragDropOperation*& OutOperation)
@@ -267,7 +273,7 @@ void UUMG_BasicTask::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 	OutOperation->Payload = this;
 	OutOperation->DefaultDragVisual = this;
 	OutOperation->Pivot = EDragPivot::MouseDown;
-
+	BPOnDrag();
 	RemoveFromParent();
 }
 

@@ -16,8 +16,9 @@ class MYREWARDPROJECT_API UUMG_MainUI : public UUserWidget
 {
 	virtual void NativeConstruct() override;
 public:
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_TasksContainer* TasksContainer;
-
+	
 	GENERATED_BODY()
 };

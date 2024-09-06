@@ -11,14 +11,16 @@ class UWidget;
  * 
  */
 UCLASS()
-class MYREWARDPROJECT_API UBFL_FunctionUtilities : public UBlueprintFunctionLibrary
+class UMG_UTILITIES_API UBFL_FunctionUtilities : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-public:
-	UFUNCTION(BlueprintCallable, Category="UI")
-	static float JFNumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed = 3.f, float LessThan = 0.2f);
 
-	UFUNCTION(BlueprintCallable, Category="UI", meta=(WorldContext="WorldContextObject"))
+public:
+	UFUNCTION(BlueprintCallable, Category="UI",meta=(Keywords="NumberIncrease,NumberDecrease,ChangeNumber"))
+	static float JFNumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed = 3.f,
+	                                           float LessThan = 0.2f);
+
+	UFUNCTION(BlueprintCallable, Category="UI", meta=(WorldContext="WorldContextObject"),meta=(Keywords="CreateWidget"))
 	static UUserWidget* JFSetWidgetPositionByDPI(UObject* WorldContextObject, UWidget* WidgetToGetPos,
 	                                             TSubclassOf<UUserWidget> WidgetClassToCreate,
 	                                             UUserWidget* ExistWidget_Optional);
@@ -35,6 +37,9 @@ public:
 	static AActor* JFSpawnActorAtWidgetWorldPosition(UObject* WorldContextObject, UWidget* Widget,
 	                                                 TSubclassOf<AActor> ActorToSpawn,
 	                                                 APlayerController* PlayerController);
-	UFUNCTION(BlueprintCallable, Category="Utility")
+	UFUNCTION(BlueprintCallable, Category="Utility", BlueprintPure)
 	static FText JFFloatToText(float InputFloat);
+
+	UFUNCTION(BlueprintCallable, Category = "UI", meta=(WorldContext="WorldContextObject"))
+	static FVector2D JFGetWidgetViewPortPosition(UObject* WorldContextObject,UWidget* Widget);
 };

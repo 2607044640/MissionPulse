@@ -3,16 +3,15 @@
 
 #include "UMG_TasksContainer.h"
 
+#include "BFL_FunctionUtilities.h"
 #include "UMG_BasicEditer.h"
 #include "UMG_BasicTask.h"
 #include "Blueprint/DragDropOperation.h"
-#include "Blueprint/SlateBlueprintLibrary.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "MyRewardProject/MyRewardProject.h"
-#include "MyRewardProject/BlueprintFunctionLibraries/BFL_FunctionUtilities.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 
 
@@ -79,68 +78,6 @@ void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(
 	}
 }
 
-
-bool UUMG_TasksContainer::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-                                       UDragDropOperation* InOperation)
-{
-	if (UUMG_BasicTask* OtherBasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
-	{
-		/// Selection of ScrollBox
-		UScrollBox* SelectedScrollBox = ScrollBox_Tasks;
-
-		// Get the geometry
-		FGeometry WidgetGeometry = ScrollBox_Tasks_Finish->GetCachedGeometry();
-		FVector2D LocalCoordinate(0, 0);
-		FVector2D PixelPosition;
-		FVector2D ViewportPosition;
-		USlateBlueprintLibrary::LocalToViewport
-			(this, WidgetGeometry, LocalCoordinate, PixelPosition, ViewportPosition);
-
-		FVector2D MousePosition(InDragDropEvent.GetScreenSpacePosition());
-
-		//Calc MousePosition(Regardless the screen size, it will always remain the same and correct position)
-		FVector2D RealTimeMousePosition = MousePosition - ViewportPosition;
-
-		//Local Size (Right Down Corner)
-		FVector2D RightDownCorner = WidgetGeometry.GetLocalSize();
-
-		if (RealTimeMousePosition.X > 0 && RealTimeMousePosition.Y > 0 &&
-			RealTimeMousePosition.X < RightDownCorner.X && RealTimeMousePosition.Y < RightDownCorner.Y)
-		{
-			SelectedScrollBox = ScrollBox_Tasks_Finish;
-		}
-
-		//get children position then calculate
-		int32 TempIndex = CalcAndGetIndex(MousePosition, SelectedScrollBox);
-
-		//Other operation
-		SelectedScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
-
-		SortPanelWidgetsChildren(SelectedScrollBox);
-
-		MySaveGIS->SaveAllData();
-	}
-
-	return false;
-}
-
-void UUMG_TasksContainer::SortPanelWidgetsChildren(UPanelWidget* InPanelWidget)
-{
-	TArray<UWidget*> Children = InPanelWidget->GetAllChildren();
-
-	Children.Sort([InPanelWidget](const UWidget& A, const UWidget& B)
-	{
-		int32 IndexA = InPanelWidget->GetChildIndex(&A);
-		int32 IndexB = InPanelWidget->GetChildIndex(&B);
-		return IndexA < IndexB;
-	});
-
-	InPanelWidget->ClearChildren();
-	for (UWidget* Child : Children)
-	{
-		InPanelWidget->AddChild(Child);
-	}
-}
 
 void UUMG_TasksContainer::TaskDataAddToTask(FTaskData InTaskData)
 {
@@ -224,7 +161,6 @@ void UUMG_TasksContainer::NativeConstruct()
 			ComboBoxString_TasksClassification->AddOption(InTaskData.SortName);
 		}
 
-
 		//Add tasks
 		TaskDataAddToTask(InTaskData);
 	}
@@ -239,7 +175,7 @@ void UUMG_TasksContainer::NativeConstruct()
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress));
 	BasicEditer_DailyProgressRewardValue->TextBlock->SetText(
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
-	
+
 	MySaveGIS->SaveAllData();
 }
 
@@ -263,36 +199,35 @@ bool UUMG_TasksContainer::NativeOnDragOver(const FGeometry& InGeometry, const FD
 		UScrollBox* SelectedScrollBox = ScrollBox_Tasks;
 
 		// Get the geometry
-		FGeometry WidgetGeometry = ScrollBox_Tasks_Finish->GetCachedGeometry();
-		FVector2D LocalCoordinate(0, 0);
-		FVector2D PixelPosition;
-		FVector2D ViewportPosition;
-		USlateBlueprintLibrary::LocalToViewport
-			(this, WidgetGeometry, LocalCoordinate, PixelPosition, ViewportPosition);
+		FVector2D ViewportPosition = UBFL_FunctionUtilities::JFGetWidgetViewPortPosition(this, ScrollBox_Tasks_Finish);
 
-		FVector2D MousePosition(InDragDropEvent.GetScreenSpacePosition());
+		FVector2D ScreenMousePosition(InDragDropEvent.GetScreenSpacePosition());
 
 		//Calc MousePosition(Regardless the screen size, it will always remain the same and correct position)
-		FVector2D RealTimeMousePosition = MousePosition - ViewportPosition;
+		FVector2D RealTimeMousePosition = ScreenMousePosition - ViewportPosition;
 
 		//Local Size (Right Down Corner)
-		FVector2D RightDownCorner = WidgetGeometry.GetLocalSize();
+		FVector2D RightDownCorner = ScrollBox_Tasks_Finish->GetCachedGeometry().GetLocalSize();
 
 		if (RealTimeMousePosition.X > 0 && RealTimeMousePosition.Y > 0 &&
 			RealTimeMousePosition.X < RightDownCorner.X && RealTimeMousePosition.Y < RightDownCorner.Y)
 		{
+			//todo check if near edge of scrollbox
+
 			SelectedScrollBox = ScrollBox_Tasks_Finish;
 		}
 
 		//get children position then calculate
-		int32 TempIndex = CalcAndGetIndex(MousePosition, SelectedScrollBox);
+		int32 TempIndex = CalcAndGetIndex(ScreenMousePosition, SelectedScrollBox);
+		if (TempIndex != SelectedScrollBox->GetChildIndex(OtherBasicTask))
+		{
+			//Other operation
+			SelectedScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
 
-		//Other operation
-		SelectedScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
+			SortPanelWidgetsChildren(SelectedScrollBox);
 
-		SortPanelWidgetsChildren(SelectedScrollBox);
-
-		MySaveGIS->SaveAllData();
+			MySaveGIS->SaveAllData();
+		}
 	}
 
 	return Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
@@ -327,4 +262,22 @@ int32 UUMG_TasksContainer::CalcAndGetIndex(FVector2D MousePosition, UPanelWidget
 		return InPanelWidget->GetChildIndex(SelectChild) + 1;
 	}
 	return 0;
+}
+
+void UUMG_TasksContainer::SortPanelWidgetsChildren(UPanelWidget* InPanelWidget)
+{
+	TArray<UWidget*> Children = InPanelWidget->GetAllChildren();
+
+	Children.Sort([InPanelWidget](const UWidget& A, const UWidget& B)
+	{
+		int32 IndexA = InPanelWidget->GetChildIndex(&A);
+		int32 IndexB = InPanelWidget->GetChildIndex(&B);
+		return IndexA < IndexB;
+	});
+
+	InPanelWidget->ClearChildren();
+	for (UWidget* Child : Children)
+	{
+		InPanelWidget->AddChild(Child);
+	}
 }

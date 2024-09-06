@@ -4,12 +4,16 @@
 #include "MySaveGIS.h"
 
 #include "Components/ScrollBox.h"
+#include "Kismet/GameplayStatics.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/BlueprintFunctionLibraries/BFL_GetClasses.h"
+#include "MyRewardProject/Frameworks/MyHUD.h"
 #include "MyRewardProject/UMG/UMG_BasicTask.h"
 #include "MyRewardProject/UMG/UMG_MainUI.h"
 #include "MyRewardProject/UMG/UMG_TasksContainer.h"
 
+
+class AMyHUD;
 
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -48,10 +52,6 @@ void UMySaveGIS::AddScore(float AddNum)
 
 	if (Global_AllDataToSave.GlobalDailyProgress <= Global_AllDataToSave.GlobalDailyProgress_Saved)
 	{
-		// Convert the values to integers if necessary (assuming they are floats and you want integer division)
-		const int32 SavedProgress = static_cast<int32>(Global_AllDataToSave.GlobalDailyProgress_Saved);
-		const int32 TotalProgress = static_cast<int32>(Global_AllDataToSave.GlobalDailyProgress);
-
 		// Calculate the quotient (how many times the divisor fits into the dividend)
 		int32 Quotient = Global_AllDataToSave.GlobalDailyProgress_Saved / Global_AllDataToSave.GlobalDailyProgress;
 
@@ -63,6 +63,11 @@ void UMySaveGIS::AddScore(float AddNum)
 		{
 			Global_AllDataToSave.GlobalDailyProgress_Saved -= Global_AllDataToSave.GlobalDailyProgress;
 			Global_AllDataToSave.GlobalTotalScore += Global_AllDataToSave.DailyProgressRewardValue;
+
+			//Effect
+			AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
+			MyHUD->MainUI->TasksContainer->BPOnFinishDailyProgress();
+			//todo BPOnFinishDailyProgress parameter times?
 		}
 	}
 }
