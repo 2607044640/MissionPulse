@@ -21,14 +21,14 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 	LoadData(Global_AllDataToSave);
 }
 
-void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* ScrollBox)
+void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
 {
-	if (!ScrollBox->GetAllChildren().IsValidIndex(0))
+	if (!InScrollBox->GetAllChildren().IsValidIndex(0))
 	{
 		return;
 	}
 	for (UWidget*
-	     Child : ScrollBox->GetAllChildren())
+	     Child : InScrollBox->GetAllChildren())
 	{
 		UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child);
 		Global_AllDataToSave.TaskDatum.Add(UMG_BasicTask->TaskData);
@@ -141,6 +141,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	{
 		// Save the JSON string to a file
 		FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
+
 		if (FFileHelper::SaveStringToFile(JsonStr, *FilePath))
 		{
 			// FString TempStr1 = FString::Printf(TEXT("File saved successfully at %s"), *FilePath);
@@ -155,6 +156,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 {
 	FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
+
 	FString Result;
 	if (FFileHelper::LoadFileToString(Result, *FilePath))
 	{
@@ -193,7 +195,8 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 				{
 					if (TSharedPtr<FJsonObject> OtherObject = JsonValue->AsObject())
 					{
-						Global_AllDataToSave.GlobalTotalScore = OtherObject->GetNumberField(TEXT("GlobalTotalScore"));
+						Global_AllDataToSave.GlobalTotalScore = OtherObject->GetNumberField(
+							TEXT("GlobalTotalScore"));
 						Global_AllDataToSave.DailyProgressRewardValue = OtherObject->GetNumberField(
 							TEXT("DailyProgressRewardValue"));
 						Global_AllDataToSave.GlobalDailyProgress = OtherObject->GetNumberField(
@@ -214,7 +217,7 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 
 			return true;
 		}
-	}
+	}	
 	return false;
 }
 

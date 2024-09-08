@@ -51,6 +51,11 @@ void UUMG_BasicEditer::ThisOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText In
 void UUMG_BasicEditer::NativeConstruct()
 {
 	Super::NativeConstruct();
+	if (OnEditFinish.IsBound())
+	{
+		return;
+	}
+	
 	EditableTextBox_Basic->OnTextChanged.AddDynamic(this, &UUMG_BasicEditer::EditableTextBox_BasicOnTextChanged);
 	EditableTextBox_Basic->OnTextCommitted.AddDynamic(this, &UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted);
 

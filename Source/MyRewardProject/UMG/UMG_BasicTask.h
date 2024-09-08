@@ -14,6 +14,8 @@ struct FTaskData;
 class UUMG_BasicTask;
 DECLARE_MULTICAST_DELEGATE_OneParam(TaskStateChanged, UUMG_BasicTask* BasicTask)
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBasicTaskDrop);
+
 class UButton;
 /**
  * 
@@ -22,6 +24,10 @@ UCLASS()
 class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 {
 public:
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnBasicTaskDrop OnBasicTaskDrop;
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOtherRefresh();
 	UFUNCTION(BlueprintCallable)
@@ -57,7 +63,6 @@ public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* ButtonAddScore;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	;
 	UButton* ButtonMinusScore;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_Finish;
@@ -76,10 +81,10 @@ public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_BasicEditer* SlotScore;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	bool bTaskIsAddScore = true;
+	bool bMyTaskIsAddScore = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	bool bIsAddTask = true;
+	bool bBasicTaskIsAddTask = true;
 	FTimerHandle CheckPressedAddOrMinusHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
@@ -88,7 +93,7 @@ public:
 	UPROPERTY()
 	UMySaveGIS* MySaveGIS;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	UUMG_TasksContainer* ParentTasksContainer;
+	UUMG_TasksContainer* umg_ParentTasksContainer;
 
 
 	//Init
@@ -124,12 +129,11 @@ public:
 	void BPOnDrag();
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnDrop();
+	
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
 	                                  UDragDropOperation*& OutOperation) override;
 
 	void AddScore(UUMG_BasicTask* BasicTask);
-	virtual void NativeOnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	                               UDragDropOperation* InOperation) override;
 
 	GENERATED_BODY()
 };

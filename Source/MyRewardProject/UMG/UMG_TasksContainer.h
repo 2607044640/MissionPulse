@@ -18,9 +18,15 @@ class UTextBlock;
  * 
  */
 
+DECLARE_MULTICAST_DELEGATE(TaskStateChanged1)
+
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
+	
+	// UPROPERTY(BlueprintAssignable)
+	TaskStateChanged1 OnDro1p;
+	
 	UFUNCTION()
 	void ButtonAddTaskOnClick();
 	UFUNCTION()
@@ -28,21 +34,22 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	void TaskDataAddToTask(FTaskData InTaskData);
 	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
-	
+
 	virtual void NativeConstruct() override;
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnFinishDailyProgress();
-	
+
 	UFUNCTION(BlueprintCallable)
 	FString FloatToText(float Input);
 	UFUNCTION(BlueprintCallable)
 	float TextBlockTextTofloat(UTextBlock* TextBlock);
-	
+
 	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 	                              UDragDropOperation* InOperation) override;
-	
+	UPanelSlot* MyInsertChildAt(int32 Index, UWidget* Content, UScrollBox* ScrollBox);
+
 	int32 CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget);
 	void SortPanelWidgetsChildren(UPanelWidget* InPanelWidget);
 
@@ -54,7 +61,7 @@ public:
 
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UTextBlock* TextBlock_Score;
-	
+
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_AddSortName;
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
@@ -73,7 +80,23 @@ public:
 	TSubclassOf<UUMG_BasicTask> UIClass;
 	UPROPERTY()
 	UMySaveGIS* MySaveGIS;
+	double ScrollBoxOffset_Finish;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	double SpeedOfScroll = 150;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	double OffsetOfScroll = 110;
+
+
+	UPROPERTY()
+	UScrollBox* SelectedScrollBox;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	bool bCanScroll;
+	
+	bool bIsScrollUp;
+	double SpeedOfScroll_ByEdgeDistance=1;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
 	GENERATED_BODY()
 };

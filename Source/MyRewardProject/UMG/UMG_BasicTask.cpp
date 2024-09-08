@@ -10,6 +10,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
+#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -57,7 +58,7 @@ void UUMG_BasicTask::SlotDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText 
 void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 {
 	UKismetSystemLibrary::K2_PauseTimerHandle(this, CheckPressedAddOrMinusHandle);
-	if (TaskData.SavedTimes && bIsAddTask)
+	if (TaskData.SavedTimes && bBasicTaskIsAddTask)
 	{
 		if (OnAddScore.IsBound())
 		{
@@ -94,17 +95,11 @@ void UUMG_BasicTask::AddScore(UUMG_BasicTask* BasicTask)
 	}
 }
 
-void UUMG_BasicTask::NativeOnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-                                       UDragDropOperation* InOperation)
-{
-	Super::NativeOnDragEnter(InGeometry, InDragDropEvent, InOperation);
-	//todo auto scroll up
-}
-
 void UUMG_BasicTask::MinusScore(UUMG_BasicTask* Uumg_BasicTask)
 {
-	bIsAddTask = true;
+	bBasicTaskIsAddTask = true;
 	TaskData.SavedTimes = TaskData.SavedTimes + 1;
+
 	if (TaskData.bIsAddScore)
 	{
 		MySaveGIS->MinusScore(TaskData.Score);
@@ -119,7 +114,7 @@ void UUMG_BasicTask::MinusScore(UUMG_BasicTask* Uumg_BasicTask)
 
 void UUMG_BasicTask::CheckPressedAddOrMinus()
 {
-	bIsAddTask = false;
+	bBasicTaskIsAddTask = false;
 }
 
 void UUMG_BasicTask::Button_FinishOnPressed()
@@ -160,8 +155,14 @@ void UUMG_BasicTask::NativeConstruct()
 	Super::NativeConstruct();
 
 	if (bIsCopiedWidget) return;
-
 	//button
+	if (OnAddScore.IsBound())
+	{
+		return;
+	}
+	
+	OnBasicTaskDrop.AddDynamic(this, &UUMG_BasicTask::BPOnDrop);
+
 	Image_Coin->OnMouseButtonDownEvent.BindUFunction(this,TEXT("OnImageClicked"));
 
 	Button_Finish->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnClicked);
@@ -175,8 +176,8 @@ void UUMG_BasicTask::NativeConstruct()
 	//finish
 	OnTaskFinish.AddUObject(this, &UUMG_BasicTask::TaskFinish);
 	AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-	ParentTasksContainer = MyHUD->MainUI->TasksContainer;
-	if (!ParentTasksContainer)
+	umg_ParentTasksContainer = MyHUD->MainUI->TasksContainer;
+	if (!umg_ParentTasksContainer)
 	{
 		RemoveFromParent();
 		FString teowjewo = FString::Printf(TEXT("None Parent_TasksContainer->RemoveFromParent"));
@@ -184,8 +185,8 @@ void UUMG_BasicTask::NativeConstruct()
 		UE_LOG(LogTemp, Error, TEXT("%s"), *teowjewo);
 	}
 
-	OnTaskFinish.AddUObject(ParentTasksContainer, &UUMG_TasksContainer::TaskFinish);
-	OnTaskNotFinish.AddUObject(ParentTasksContainer, &UUMG_TasksContainer::TaskNotFinish);
+	OnTaskFinish.AddUObject(umg_ParentTasksContainer, &UUMG_TasksContainer::TaskFinish);
+	OnTaskNotFinish.AddUObject(umg_ParentTasksContainer, &UUMG_TasksContainer::TaskNotFinish);
 
 	//edit
 	SlotTitle->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotTitleOnEditFinish);
@@ -205,6 +206,7 @@ void UUMG_BasicTask::NativeConstruct()
 
 	RefreshUI();
 }
+
 
 
 void UUMG_BasicTask::Button_FinishOnClicked()
@@ -242,7 +244,11 @@ FReply UUMG_BasicTask::NativeOnMouseButtonDown(const FGeometry& InGeometry, cons
 bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
                                   UDragDropOperation* InOperation)
 {
-	BPOnDrop();
+	if (OnBasicTaskDrop.IsBound())
+	{
+		OnBasicTaskDrop.Broadcast();
+	}
+
 	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 }
 
@@ -273,9 +279,11 @@ void UUMG_BasicTask::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 	OutOperation->Payload = this;
 	OutOperation->DefaultDragVisual = this;
 	OutOperation->Pivot = EDragPivot::MouseDown;
+
 	BPOnDrag();
 	RemoveFromParent();
 }
+
 
 
 void UUMG_BasicTask::RefreshUI()

@@ -165,6 +165,29 @@ AActor* UBFL_FunctionUtilities::JFSpawnActorAtWidgetWorldPosition(UObject* World
 	return nullptr;
 }
 
+bool UBFL_FunctionUtilities::CheckMouseIsInsideOfWidget_DragDropEvent(UObject* WorldContextObject, UWidget* Widget,
+                                                        FVector2D InDragDropEventGetScreenSpacePosition)
+{
+	// Get the geometry
+	FVector2D ViewportPosition = JFGetWidgetViewPortPosition(WorldContextObject, Widget);
+
+	//Calc MousePosition(Regardless the screen size, it will always remain the same and correct position)
+	FVector2D LocalMousePositionInWidget = InDragDropEventGetScreenSpacePosition - ViewportPosition;
+
+	//Local Size (Right Down Corner)
+	FVector2D RightDownCorner = Widget->GetCachedGeometry().GetLocalSize();
+
+	if (LocalMousePositionInWidget.X > 0 && LocalMousePositionInWidget.Y > 0 &&
+		LocalMousePositionInWidget.X < RightDownCorner.X && LocalMousePositionInWidget.Y < RightDownCorner.Y)
+	{
+		return true;
+	}
+
+
+	return false;
+}
+
+
 float UBFL_FunctionUtilities::JFNumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed,
                                                             float LessThan)
 {

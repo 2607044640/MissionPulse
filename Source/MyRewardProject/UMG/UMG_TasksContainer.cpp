@@ -7,10 +7,14 @@
 #include "UMG_BasicEditer.h"
 #include "UMG_BasicTask.h"
 #include "Blueprint/DragDropOperation.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetArrayLibrary.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 
@@ -21,6 +25,18 @@ void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
 	{
 		ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
 	}
+}
+
+void UUMG_TasksContainer::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	if (bCanScroll)
+	{
+		SelectedScrollBox->SetScrollOffset(SelectedScrollBox->GetScrollOffset()
+			+ (bIsScrollUp
+				   ? -SpeedOfScroll
+				   : SpeedOfScroll) * InDeltaTime * SpeedOfScroll_ByEdgeDistance);
+	}
+	Super::NativeTick(MyGeometry, InDeltaTime);
 }
 
 void UUMG_TasksContainer::TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask)
@@ -193,36 +209,52 @@ float UUMG_TasksContainer::TextBlockTextTofloat(UTextBlock* TextBlock)
 bool UUMG_TasksContainer::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
                                            UDragDropOperation* InOperation)
 {
-	if (UUMG_BasicTask* OtherBasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
+	if (UUMG_BasicTask* Uumg_BasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
 	{
 		/// Selection of ScrollBox
-		UScrollBox* SelectedScrollBox = ScrollBox_Tasks;
+		bool bTempCheck = UBFL_FunctionUtilities::CheckMouseIsInsideOfWidget_DragDropEvent(
+			this, ScrollBox_Tasks, InDragDropEvent.GetScreenSpacePosition());
+		SelectedScrollBox = bTempCheck ? ScrollBox_Tasks : ScrollBox_Tasks_Finish;
 
-		// Get the geometry
-		FVector2D ViewportPosition = UBFL_FunctionUtilities::JFGetWidgetViewPortPosition(this, ScrollBox_Tasks_Finish);
-
-		FVector2D ScreenMousePosition(InDragDropEvent.GetScreenSpacePosition());
-
-		//Calc MousePosition(Regardless the screen size, it will always remain the same and correct position)
-		FVector2D RealTimeMousePosition = ScreenMousePosition - ViewportPosition;
-
-		//Local Size (Right Down Corner)
-		FVector2D RightDownCorner = ScrollBox_Tasks_Finish->GetCachedGeometry().GetLocalSize();
-
-		if (RealTimeMousePosition.X > 0 && RealTimeMousePosition.Y > 0 &&
-			RealTimeMousePosition.X < RightDownCorner.X && RealTimeMousePosition.Y < RightDownCorner.Y)
+		//if two scroll box is visible, then set one of them to collapsed
+		if (ScrollBox_Tasks->GetVisibility() == ESlateVisibility::Visible &&
+			ScrollBox_Tasks_Finish->GetVisibility() == ESlateVisibility::Visible)
 		{
-			//todo check if near edge of scrollbox
+			(bTempCheck ? ScrollBox_Tasks_Finish : ScrollBox_Tasks)->SetVisibility(ESlateVisibility::Collapsed);
+		}
 
-			SelectedScrollBox = ScrollBox_Tasks_Finish;
+		//Use MousePosition - Viewport to get Local MousePosition value of inside of scrollbox  
+		FVector2D LocalMousePositionInWidget = InDragDropEvent.GetScreenSpacePosition() -
+			UBFL_FunctionUtilities::JFGetWidgetViewPortPosition(this, SelectedScrollBox);
+
+		FVector2D RightDownCorner = SelectedScrollBox->GetCachedGeometry().GetLocalSize();
+
+
+		if (LocalMousePositionInWidget.Y > RightDownCorner.Y - OffsetOfScroll)
+		{
+			// SpeedOfScroll_ByEdgeDistance = 5.f / RightDownCorner.Y - LocalMousePositionInWidget.Y;
+			bCanScroll = true;
+			bIsScrollUp = false;
+		}
+		else if (LocalMousePositionInWidget.Y < OffsetOfScroll)
+		{
+			// SpeedOfScroll_ByEdgeDistance = 5.f / LocalMousePositionInWidget.Y;
+			bCanScroll = true;
+			bIsScrollUp = true;
+		}
+		else if (LocalMousePositionInWidget.Y > OffsetOfScroll &&
+			LocalMousePositionInWidget.Y < RightDownCorner.Y - OffsetOfScroll)
+		{
+			bCanScroll = false;
 		}
 
 		//get children position then calculate
-		int32 TempIndex = CalcAndGetIndex(ScreenMousePosition, SelectedScrollBox);
-		if (TempIndex != SelectedScrollBox->GetChildIndex(OtherBasicTask))
+		int32 InMyTempIndex = CalcAndGetIndex(InDragDropEvent.GetScreenSpacePosition(), SelectedScrollBox);
+		//when the index of child is exactly the number has been calculated, then we don't need to operate anything
+		if (InMyTempIndex != SelectedScrollBox->GetChildIndex(Uumg_BasicTask))
 		{
 			//Other operation
-			SelectedScrollBox->InsertChildAt(TempIndex, OtherBasicTask);
+			MyInsertChildAt(InMyTempIndex, Uumg_BasicTask, SelectedScrollBox);
 
 			SortPanelWidgetsChildren(SelectedScrollBox);
 
@@ -231,6 +263,15 @@ bool UUMG_TasksContainer::NativeOnDragOver(const FGeometry& InGeometry, const FD
 	}
 
 	return Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
+}
+
+UPanelSlot* UUMG_TasksContainer::MyInsertChildAt(int32 Index, UWidget* Content, UScrollBox* ScrollBox)
+{
+	UPanelSlot* NewSlot = ScrollBox->AddChild(Content);
+	int32 CurrentIndex = ScrollBox->GetChildIndex(Content);
+	ScrollBox->Slots.RemoveAt(CurrentIndex);
+	ScrollBox->Slots.Insert(Content->Slot, FMath::Clamp(Index, 0, ScrollBox->Slots.Num()));
+	return NewSlot;
 }
 
 
