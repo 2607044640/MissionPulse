@@ -81,7 +81,7 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 		{
 			bool bTempCheck = (SelectedScrollBox == ScrollBox_Tasks);
 			(bTempCheck ? ScrollBox_Tasks_Finish : ScrollBox_Tasks)->SetVisibility(ESlateVisibility::Collapsed);
-		}
+		}  
 
 		//Other operation
 		int32 TempIndex = SelectedScrollBox->GetChildIndex(InBasicTask);

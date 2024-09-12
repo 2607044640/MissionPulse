@@ -167,7 +167,7 @@ void UUMG_BasicTask::NativeConstruct()
 	{
 		return;
 	}
-	
+
 	PreviousColor = Border_UserVisualColor->GetBrushColor();
 	OnBasicTaskDrop.AddDynamic(this, &UUMG_BasicTask::TaskOnUnSelected);
 

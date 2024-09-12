@@ -91,14 +91,14 @@ public:
 	TArray<FTaskData> TaskDatum;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	float GlobalTotalScore;
-	
+
 	//Daily Reward
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	float GlobalDailyProgress;
+	float GlobalDailyProgress = 20;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	float GlobalDailyProgress_Saved;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	float DailyProgressRewardValue;
+	float DailyProgressRewardValue = 5;
 	GENERATED_BODY()
 };
 
@@ -122,9 +122,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetScore();
-	UFUNCTION(BlueprintCallable,BlueprintPure)
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetGlobalDailyProgress_Saved();
-	UFUNCTION(BlueprintCallable,BlueprintPure)
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
 	FAllDataToSave Global_AllDataToSave;
 
