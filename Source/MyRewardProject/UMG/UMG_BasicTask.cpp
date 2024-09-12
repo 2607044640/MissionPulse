@@ -8,9 +8,9 @@
 #include "UMG_MainUI.h"
 #include "UMG_TasksContainer.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/Border.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
-#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -78,6 +78,7 @@ void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 
 	MySaveGIS->SaveAllData();
 }
+
 
 void UUMG_BasicTask::AddScore(UUMG_BasicTask* BasicTask)
 {
@@ -149,7 +150,6 @@ void UUMG_BasicTask::ButtonMinusScoreOnClicked()
 	MySaveGIS->SaveAllData();
 }
 
-
 void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -161,7 +161,8 @@ void UUMG_BasicTask::NativeConstruct()
 		return;
 	}
 	
-	OnBasicTaskDrop.AddDynamic(this, &UUMG_BasicTask::BPOnDrop);
+	PreviousColor = Border_UserVisualColor->GetBrushColor();
+	OnBasicTaskDrop.AddDynamic(this, &UUMG_BasicTask::TaskOnUnSelected);
 
 	Image_Coin->OnMouseButtonDownEvent.BindUFunction(this,TEXT("OnImageClicked"));
 
@@ -202,11 +203,10 @@ void UUMG_BasicTask::NativeConstruct()
 	FTimerHandle TempHandle;
 	GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UUMG_BasicTask::CheckIfTaskFinish, 0.2);
 
-	SetPadding(FMargin(5, 0, 200, 0));
+	SetPadding(BasicTaskMargin);
 
 	RefreshUI();
 }
-
 
 
 void UUMG_BasicTask::Button_FinishOnClicked()
@@ -238,6 +238,9 @@ void UUMG_BasicTask::CheckIfTaskFinish()
 
 FReply UUMG_BasicTask::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+	umg_ParentTasksContainer->RemoveOtherSelectedBasicTask();
+	umg_ParentTasksContainer->SelectedBasicTask = this;
+	TaskOnSelected();
 	return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
 }
 
@@ -250,6 +253,16 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	}
 
 	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+}
+
+void UUMG_BasicTask::TaskOnSelected()
+{
+	Border_UserVisualColor->SetBrushColor(BP_Border_UserVisualColor_Color);
+}
+
+void UUMG_BasicTask::TaskOnUnSelected()
+{
+	Border_UserVisualColor->SetBrushColor(PreviousColor);
 }
 
 // UUMG_BasicTask* UUMG_BasicTask::CopySelf()
@@ -269,21 +282,6 @@ bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 //
 // 	return nullptr;
 // }
-
-void UUMG_BasicTask::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
-                                          UDragDropOperation*& OutOperation)
-{
-	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
-
-	OutOperation = UWidgetBlueprintLibrary::CreateDragDropOperation(UDragDropOperation::StaticClass());
-	OutOperation->Payload = this;
-	OutOperation->DefaultDragVisual = this;
-	OutOperation->Pivot = EDragPivot::MouseDown;
-
-	BPOnDrag();
-	RemoveFromParent();
-}
-
 
 
 void UUMG_BasicTask::RefreshUI()

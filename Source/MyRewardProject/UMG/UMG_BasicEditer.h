@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UMG_TasksContainer.h"
 #include "UMG_BasicEditer.generated.h"
 
+class UWidgetSwitcher;
+class UButton;
 class UTextBlock;
 class UEditableTextBox;
 class UUMG_BasicTask;
@@ -25,11 +27,22 @@ class MYREWARDPROJECT_API UUMG_BasicEditer : public UUserWidget
 	void EditableTextBox_BasicOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod);
 
 	void ThisOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
+	void TaskContainerOnMouseButtonDownFunc();
+
+	UFUNCTION()
+	void ButtonOnClicked();
+	
 	virtual void NativeConstruct() override;
 
 public:
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	UButton* Button;
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UWidgetSwitcher* WidgetSwitcher;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	UUMG_BasicTask* BasicTask;
+	UPROPERTY()
+	UUMG_TasksContainer* TaskContainer;
 
 
 	OnTaskEditedChanged OnEditFinish;

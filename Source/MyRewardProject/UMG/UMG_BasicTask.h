@@ -3,20 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UMG_TasksContainer.h"
 #include "Blueprint/UserWidget.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_BasicTask.generated.h"
 
-class UUMG_BasicEditer;
-struct FTaskData;
 
+class UUMG_TasksContainer;
+class UImage;
+class UBorder;
+class UUMG_BasicEditer;
 class UUMG_BasicTask;
-DECLARE_MULTICAST_DELEGATE_OneParam(TaskStateChanged, UUMG_BasicTask* BasicTask)
+class UMySaveGIS;
+struct FTaskData;
+class UButton;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBasicTaskDrop);
-
-class UButton;
+DECLARE_MULTICAST_DELEGATE_OneParam(TaskStateChanged, UUMG_BasicTask* BasicTask)
 /**
  * 
  */
@@ -25,8 +27,16 @@ class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 {
 public:
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FTaskData TaskData;
+	
 	UPROPERTY(BlueprintAssignable)
 	FOnBasicTaskDrop OnBasicTaskDrop;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FLinearColor BP_Border_UserVisualColor_Color;
+	FLinearColor PreviousColor;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FMargin BasicTaskMargin;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOtherRefresh();
@@ -40,13 +50,12 @@ public:
 	void BPOnAddScoreEffect();
 
 	TaskStateChanged OnButtonClicked;
-	TaskStateChanged OnAddScore;
 	TaskStateChanged OnMinusScore;
+	TaskStateChanged OnAddScore;
 	TaskStateChanged OnTaskFinish;
 	TaskStateChanged OnTaskNotFinish;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	FTaskData TaskData;
+	
 
 public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
@@ -125,14 +134,12 @@ public:
 	                          UDragDropOperation* InOperation) override;
 	// UUMG_BasicTask* CopySelf();
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void BPOnDrag();
-	UFUNCTION(BlueprintImplementableEvent)
-	void BPOnDrop();
-	
-	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
-	                                  UDragDropOperation*& OutOperation) override;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	UBorder* Border_UserVisualColor;
+	UFUNCTION()
+	void TaskOnSelected();
+	UFUNCTION()
+	void TaskOnUnSelected();
 	void AddScore(UUMG_BasicTask* BasicTask);
 
 	GENERATED_BODY()

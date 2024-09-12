@@ -27,16 +27,77 @@ void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
 	}
 }
 
-void UUMG_TasksContainer::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UUMG_TasksContainer::RemoveOtherSelectedBasicTask()
 {
-	if (bCanScroll)
+	for (UWidget*
+	     Child : ScrollBox_Tasks->GetAllChildren())
 	{
-		SelectedScrollBox->SetScrollOffset(SelectedScrollBox->GetScrollOffset()
-			+ (bIsScrollUp
-				   ? -SpeedOfScroll
-				   : SpeedOfScroll) * InDeltaTime * SpeedOfScroll_ByEdgeDistance);
+		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
+		{
+			if (UMG_BasicTask->OnBasicTaskDrop.IsBound())
+			{
+				UMG_BasicTask->OnBasicTaskDrop.Broadcast();
+			}
+		}
 	}
-	Super::NativeTick(MyGeometry, InDeltaTime);
+	for (UWidget*
+	     Child : ScrollBox_Tasks_Finish->GetAllChildren())
+	{
+		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
+		{
+			if (UMG_BasicTask->OnBasicTaskDrop.IsBound())
+			{
+				UMG_BasicTask->OnBasicTaskDrop.Broadcast();
+			}
+		}
+	}
+
+	SelectedBasicTask = nullptr;
+}
+
+
+FReply UUMG_TasksContainer::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	RemoveOtherSelectedBasicTask();
+	if (TaskContainerOnMouseButtonDown.IsBound())
+	{
+		TaskContainerOnMouseButtonDown.Broadcast();
+	}
+	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
+void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
+{
+	UScrollBox* SelectedScrollBox = Cast<UScrollBox>(InBasicTask->GetParent());
+	if (!InBasicTask && !SelectedScrollBox)
+	{
+		return;
+	}
+	SortPanelWidgetsChildren(SelectedScrollBox);
+	//if two scroll box is visible, then set one of them to collapsed
+	if (ScrollBox_Tasks->GetVisibility() == ESlateVisibility::Visible &&
+		ScrollBox_Tasks_Finish->GetVisibility() == ESlateVisibility::Visible)
+	{
+		bool bTempCheck = (SelectedScrollBox == ScrollBox_Tasks);
+		(bTempCheck ? ScrollBox_Tasks_Finish : ScrollBox_Tasks)->SetVisibility(ESlateVisibility::Collapsed);
+	}
+
+	//Other operation
+	int32 TempIndex = SelectedScrollBox->GetChildIndex(InBasicTask);
+	TempIndex += IsDown ? -1 : 1;
+
+	// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
+
+	MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
+
+	SortPanelWidgetsChildren(SelectedScrollBox);
+
+	MySaveGIS->SaveAllData();
+
+	//set scroll offset
+	
+	//todo use /
+	// SelectedScrollBox->SetScrollOffset()
 }
 
 void UUMG_TasksContainer::TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask)
@@ -52,10 +113,12 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	UUMG_BasicTask* BasicTask = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), UIClass);
 	ScrollBox_Tasks->AddChild(BasicTask);
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
-	BasicTask->TaskData.bIsAddScore = false;
+	BasicTask->TaskData.bIsAddScore = true;
+	BasicTask->RefreshUI();
 
 	MySaveGIS->SaveAllData();
 }
+
 
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
 	ESelectInfo::Type SelectionType)
@@ -95,9 +158,9 @@ void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(
 }
 
 
-void UUMG_TasksContainer::TaskDataAddToTask(FTaskData InTaskData)
+void UUMG_TasksContainer::TaskDataTransformToTask(FTaskData InTaskData)
 {
-	//TaskData to BasicUmg
+	//Create widget
 	UUMG_BasicTask* BasicTask = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), UIClass);
 	BasicTask->TaskData = InTaskData;
 
@@ -178,7 +241,7 @@ void UUMG_TasksContainer::NativeConstruct()
 		}
 
 		//Add tasks
-		TaskDataAddToTask(InTaskData);
+		TaskDataTransformToTask(InTaskData);
 	}
 
 
@@ -206,66 +269,7 @@ float UUMG_TasksContainer::TextBlockTextTofloat(UTextBlock* TextBlock)
 }
 
 
-bool UUMG_TasksContainer::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-                                           UDragDropOperation* InOperation)
-{
-	if (UUMG_BasicTask* Uumg_BasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
-	{
-		/// Selection of ScrollBox
-		bool bTempCheck = UBFL_FunctionUtilities::CheckMouseIsInsideOfWidget_DragDropEvent(
-			this, ScrollBox_Tasks, InDragDropEvent.GetScreenSpacePosition());
-		SelectedScrollBox = bTempCheck ? ScrollBox_Tasks : ScrollBox_Tasks_Finish;
-
-		//if two scroll box is visible, then set one of them to collapsed
-		if (ScrollBox_Tasks->GetVisibility() == ESlateVisibility::Visible &&
-			ScrollBox_Tasks_Finish->GetVisibility() == ESlateVisibility::Visible)
-		{
-			(bTempCheck ? ScrollBox_Tasks_Finish : ScrollBox_Tasks)->SetVisibility(ESlateVisibility::Collapsed);
-		}
-
-		//Use MousePosition - Viewport to get Local MousePosition value of inside of scrollbox  
-		FVector2D LocalMousePositionInWidget = InDragDropEvent.GetScreenSpacePosition() -
-			UBFL_FunctionUtilities::JFGetWidgetViewPortPosition(this, SelectedScrollBox);
-
-		FVector2D RightDownCorner = SelectedScrollBox->GetCachedGeometry().GetLocalSize();
-
-
-		if (LocalMousePositionInWidget.Y > RightDownCorner.Y - OffsetOfScroll)
-		{
-			// SpeedOfScroll_ByEdgeDistance = 5.f / RightDownCorner.Y - LocalMousePositionInWidget.Y;
-			bCanScroll = true;
-			bIsScrollUp = false;
-		}
-		else if (LocalMousePositionInWidget.Y < OffsetOfScroll)
-		{
-			// SpeedOfScroll_ByEdgeDistance = 5.f / LocalMousePositionInWidget.Y;
-			bCanScroll = true;
-			bIsScrollUp = true;
-		}
-		else if (LocalMousePositionInWidget.Y > OffsetOfScroll &&
-			LocalMousePositionInWidget.Y < RightDownCorner.Y - OffsetOfScroll)
-		{
-			bCanScroll = false;
-		}
-
-		//get children position then calculate
-		int32 InMyTempIndex = CalcAndGetIndex(InDragDropEvent.GetScreenSpacePosition(), SelectedScrollBox);
-		//when the index of child is exactly the number has been calculated, then we don't need to operate anything
-		if (InMyTempIndex != SelectedScrollBox->GetChildIndex(Uumg_BasicTask))
-		{
-			//Other operation
-			MyInsertChildAt(InMyTempIndex, Uumg_BasicTask, SelectedScrollBox);
-
-			SortPanelWidgetsChildren(SelectedScrollBox);
-
-			MySaveGIS->SaveAllData();
-		}
-	}
-
-	return Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
-}
-
-UPanelSlot* UUMG_TasksContainer::MyInsertChildAt(int32 Index, UWidget* Content, UScrollBox* ScrollBox)
+UPanelSlot* UUMG_TasksContainer::MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox)
 {
 	UPanelSlot* NewSlot = ScrollBox->AddChild(Content);
 	int32 CurrentIndex = ScrollBox->GetChildIndex(Content);

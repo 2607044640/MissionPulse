@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_TasksContainer.generated.h"
 
+struct FTaskData;
+class UMySaveGIS;
 class UImage;
 class UComboBoxString;
 class UUMG_BasicEditer;
@@ -18,43 +19,42 @@ class UTextBlock;
  * 
  */
 
-DECLARE_MULTICAST_DELEGATE(TaskStateChanged1)
+DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
-	
-	// UPROPERTY(BlueprintAssignable)
-	TaskStateChanged1 OnDro1p;
-	
+
 	UFUNCTION()
 	void ButtonAddTaskOnClick();
 	UFUNCTION()
 	void ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
-	void TaskDataAddToTask(FTaskData InTaskData);
+	void TaskDataTransformToTask(FTaskData InTaskData);
 	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 
 	virtual void NativeConstruct() override;
 
 public:
-	UFUNCTION(BlueprintImplementableEvent)
-	void BPOnFinishDailyProgress();
+	OnMouseButtonEvent TaskContainerOnMouseButtonDown;
+	
+	int GiveMoney;
 
 	UFUNCTION(BlueprintCallable)
 	FString FloatToText(float Input);
 	UFUNCTION(BlueprintCallable)
 	float TextBlockTextTofloat(UTextBlock* TextBlock);
 
-	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	                              UDragDropOperation* InOperation) override;
-	UPanelSlot* MyInsertChildAt(int32 Index, UWidget* Content, UScrollBox* ScrollBox);
+	UPanelSlot* MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox);
 
 	int32 CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget);
 	void SortPanelWidgetsChildren(UPanelWidget* InPanelWidget);
 
 	void TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask);
 	void TaskFinish(UUMG_BasicTask* Uumg_BasicTask);
+	void RemoveOtherSelectedBasicTask();
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFinishDailyProgress();
 
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UComboBoxString* ComboBoxString_TasksClassification;
@@ -78,6 +78,8 @@ public:
 	UButton* ButtonAddTask;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	TSubclassOf<UUMG_BasicTask> UIClass;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	
 	UPROPERTY()
 	UMySaveGIS* MySaveGIS;
 	double ScrollBoxOffset_Finish;
@@ -88,15 +90,12 @@ public:
 	double OffsetOfScroll = 110;
 
 
-	UPROPERTY()
-	UScrollBox* SelectedScrollBox;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	bool bCanScroll;
-	
-	bool bIsScrollUp;
-	double SpeedOfScroll_ByEdgeDistance=1;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	UUMG_BasicTask* SelectedBasicTask;
 
+	double SpeedOfScroll_ByEdgeDistance = 1;
+
+	UFUNCTION(BlueprintCallable)
+	void ScrollTheChildDown(bool IsDown, UWidget* InBasicTask);
 	GENERATED_BODY()
 };

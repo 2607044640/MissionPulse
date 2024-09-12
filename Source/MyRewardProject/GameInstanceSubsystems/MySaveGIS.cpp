@@ -49,8 +49,9 @@ void UMySaveGIS::AddScore(float AddNum)
 {
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
 	Global_AllDataToSave.GlobalDailyProgress_Saved += AddNum;
-
-	if (Global_AllDataToSave.GlobalDailyProgress <= Global_AllDataToSave.GlobalDailyProgress_Saved)
+	
+	if (Global_AllDataToSave.GlobalDailyProgress <= Global_AllDataToSave.GlobalDailyProgress_Saved &&
+		Global_AllDataToSave.GlobalDailyProgress)
 	{
 		// Calculate the quotient (how many times the divisor fits into the dividend)
 		int32 Quotient = Global_AllDataToSave.GlobalDailyProgress_Saved / Global_AllDataToSave.GlobalDailyProgress;
@@ -66,8 +67,7 @@ void UMySaveGIS::AddScore(float AddNum)
 
 			//Effect
 			AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());
-			MyHUD->MainUI->TasksContainer->BPOnFinishDailyProgress();
-			//todo BPOnFinishDailyProgress parameter times?
+			MyHUD->MainUI->TasksContainer->OnFinishDailyProgress();
 		}
 	}
 }
@@ -217,7 +217,7 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 
 			return true;
 		}
-	}	
+	}
 	return false;
 }
 
