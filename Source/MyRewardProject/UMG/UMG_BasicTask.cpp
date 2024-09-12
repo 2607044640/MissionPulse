@@ -150,6 +150,13 @@ void UUMG_BasicTask::ButtonMinusScoreOnClicked()
 	MySaveGIS->SaveAllData();
 }
 
+void UUMG_BasicTask::ButtonBackgroundOnClick()
+{
+	umg_ParentTasksContainer->RemoveOtherSelectedBasicTask();
+	umg_ParentTasksContainer->SelectedBasicTask = this;
+	TaskOnSelected();
+}
+
 void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -166,6 +173,7 @@ void UUMG_BasicTask::NativeConstruct()
 
 	Image_Coin->OnMouseButtonDownEvent.BindUFunction(this,TEXT("OnImageClicked"));
 
+	ButtonBackground->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonBackgroundOnClick);
 	Button_Finish->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnClicked);
 	Button_Finish->OnPressed.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnPressed);
 	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddScore);
@@ -236,13 +244,6 @@ void UUMG_BasicTask::CheckIfTaskFinish()
 	}
 }
 
-FReply UUMG_BasicTask::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
-	umg_ParentTasksContainer->RemoveOtherSelectedBasicTask();
-	umg_ParentTasksContainer->SelectedBasicTask = this;
-	TaskOnSelected();
-	return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
-}
 
 bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
                                   UDragDropOperation* InOperation)

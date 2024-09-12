@@ -125,11 +125,14 @@ public:
 	UFUNCTION()
 	void ButtonMinusScoreOnClicked();
 
+	UFUNCTION()
+	void ButtonBackgroundOnClick();
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();
 	void CheckIfTaskFinish();
-	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UButton* ButtonBackground;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 	                          UDragDropOperation* InOperation) override;
 	// UUMG_BasicTask* CopySelf();

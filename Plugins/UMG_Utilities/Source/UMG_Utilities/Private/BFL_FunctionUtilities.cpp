@@ -88,6 +88,25 @@ UUserWidget* UBFL_FunctionUtilities::JFLerpWidgetToAnotherWidget(UObject* WorldC
 	return nullptr;
 }
 
+
+void UBFL_FunctionUtilities::SortPanelWidgetsChildren(UPanelWidget* InPanelWidget)
+{
+	TArray<UWidget*> Children = InPanelWidget->GetAllChildren();
+
+	Children.Sort([InPanelWidget](const UWidget& A, const UWidget& B)
+	{
+		int32 IndexA = InPanelWidget->GetChildIndex(&A);
+		int32 IndexB = InPanelWidget->GetChildIndex(&B);
+		return IndexA < IndexB;
+	});
+
+	InPanelWidget->ClearChildren();
+	for (UWidget* Child : Children)
+	{
+		InPanelWidget->AddChild(Child);
+	}
+}
+
 UUserWidget* UBFL_FunctionUtilities::JF2LerpWidgetWithRandomToAnotherWidget(UObject* WorldContextObject,
                                                                             UUserWidget* WidgetToDoLerp,
                                                                             UWidget* StartWidget, UWidget* EndWidget,
@@ -166,7 +185,7 @@ AActor* UBFL_FunctionUtilities::JFSpawnActorAtWidgetWorldPosition(UObject* World
 }
 
 bool UBFL_FunctionUtilities::CheckMouseIsInsideOfWidget_DragDropEvent(UObject* WorldContextObject, UWidget* Widget,
-                                                        FVector2D InDragDropEventGetScreenSpacePosition)
+                                                                      FVector2D InDragDropEventGetScreenSpacePosition)
 {
 	// Get the geometry
 	FVector2D ViewportPosition = JFGetWidgetViewPortPosition(WorldContextObject, Widget);

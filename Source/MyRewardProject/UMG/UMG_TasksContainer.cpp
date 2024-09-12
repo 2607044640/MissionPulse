@@ -68,36 +68,44 @@ FReply UUMG_TasksContainer::NativeOnMouseButtonDown(const FGeometry& InGeometry,
 
 void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 {
-	UScrollBox* SelectedScrollBox = Cast<UScrollBox>(InBasicTask->GetParent());
-	if (!InBasicTask && !SelectedScrollBox)
+	if (!InBasicTask)
 	{
 		return;
 	}
-	SortPanelWidgetsChildren(SelectedScrollBox);
-	//if two scroll box is visible, then set one of them to collapsed
-	if (ScrollBox_Tasks->GetVisibility() == ESlateVisibility::Visible &&
-		ScrollBox_Tasks_Finish->GetVisibility() == ESlateVisibility::Visible)
+	if (UScrollBox* SelectedScrollBox = Cast<UScrollBox>(InBasicTask->GetParent()))
 	{
-		bool bTempCheck = (SelectedScrollBox == ScrollBox_Tasks);
-		(bTempCheck ? ScrollBox_Tasks_Finish : ScrollBox_Tasks)->SetVisibility(ESlateVisibility::Collapsed);
+		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
+		//if two scroll box is visible, then set one of them to collapsed
+		if (ScrollBox_Tasks->GetVisibility() == ESlateVisibility::Visible &&
+			ScrollBox_Tasks_Finish->GetVisibility() == ESlateVisibility::Visible)
+		{
+			bool bTempCheck = (SelectedScrollBox == ScrollBox_Tasks);
+			(bTempCheck ? ScrollBox_Tasks_Finish : ScrollBox_Tasks)->SetVisibility(ESlateVisibility::Collapsed);
+		}
+
+		//Other operation
+		int32 TempIndex = SelectedScrollBox->GetChildIndex(InBasicTask);
+		TempIndex += IsDown ? -1 : 1;
+
+		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
+
+		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
+		
+		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
+
+		MySaveGIS->SaveAllData();
+
+		//set scroll offset
+		float ChildrenCount = SelectedScrollBox->GetChildrenCount() - 1;
+
+		float TotalLength = SelectedScrollBox->GetScrollOffsetOfEnd();
+
+		float AverageLength = TotalLength / ChildrenCount;
+
+		float FinalScrollOffset = AverageLength * SelectedScrollBox->GetChildIndex(InBasicTask);
+
+		SelectedScrollBox->SetScrollOffset(FinalScrollOffset);
 	}
-
-	//Other operation
-	int32 TempIndex = SelectedScrollBox->GetChildIndex(InBasicTask);
-	TempIndex += IsDown ? -1 : 1;
-
-	// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
-
-	MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
-
-	SortPanelWidgetsChildren(SelectedScrollBox);
-
-	MySaveGIS->SaveAllData();
-
-	//set scroll offset
-	
-	//todo use /
-	// SelectedScrollBox->SetScrollOffset()
 }
 
 void UUMG_TasksContainer::TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask)
@@ -307,22 +315,4 @@ int32 UUMG_TasksContainer::CalcAndGetIndex(FVector2D MousePosition, UPanelWidget
 		return InPanelWidget->GetChildIndex(SelectChild) + 1;
 	}
 	return 0;
-}
-
-void UUMG_TasksContainer::SortPanelWidgetsChildren(UPanelWidget* InPanelWidget)
-{
-	TArray<UWidget*> Children = InPanelWidget->GetAllChildren();
-
-	Children.Sort([InPanelWidget](const UWidget& A, const UWidget& B)
-	{
-		int32 IndexA = InPanelWidget->GetChildIndex(&A);
-		int32 IndexB = InPanelWidget->GetChildIndex(&B);
-		return IndexA < IndexB;
-	});
-
-	InPanelWidget->ClearChildren();
-	for (UWidget* Child : Children)
-	{
-		InPanelWidget->AddChild(Child);
-	}
 }

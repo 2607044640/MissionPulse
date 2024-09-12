@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/PanelWidget.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BFL_FunctionUtilities.generated.h"
 
@@ -31,6 +32,8 @@ public:
 	static UUserWidget* JFLerpWidgetToAnotherWidget(UObject* WorldContextObject, UUserWidget* WidgetToDoLerp,
 	                                                UWidget* StartWidget, UWidget* EndWidget,
 	                                                float LerpValue);
+	UFUNCTION(BlueprintCallable, Category="UI")
+	static void SortPanelWidgetsChildren(UPanelWidget* InPanelWidget);
 
 	UFUNCTION(BlueprintCallable, Category="UI", meta=(WorldContext="WorldContextObject"))
 	static UUserWidget* JF2LerpWidgetWithRandomToAnotherWidget(UObject* WorldContextObject, UUserWidget* WidgetToDoLerp,

@@ -2,7 +2,6 @@
 
 
 #include "MyHUD.h"
-
 #include "MyRewardProject/UMG/UMG_MainUI.h"
 
 template <typename T>

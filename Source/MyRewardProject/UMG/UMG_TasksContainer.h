@@ -48,7 +48,6 @@ public:
 	UPanelSlot* MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox);
 
 	int32 CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget);
-	void SortPanelWidgetsChildren(UPanelWidget* InPanelWidget);
 
 	void TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask);
 	void TaskFinish(UUMG_BasicTask* Uumg_BasicTask);
