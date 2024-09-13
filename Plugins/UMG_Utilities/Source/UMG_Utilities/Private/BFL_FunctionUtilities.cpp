@@ -34,7 +34,7 @@ UUserWidget* UBFL_FunctionUtilities::JFSetWidgetPositionByDPI(UObject* WorldCont
 	{
 		ObjectPtr = ExistWidget_Optional;
 	}
-
+ 
 	// Get the geometry
 	FGeometry WidgetGeometry = WidgetToGetPos->GetCachedGeometry();
 	FVector2D LocalCoordinate(0, 0);
@@ -42,7 +42,6 @@ UUserWidget* UBFL_FunctionUtilities::JFSetWidgetPositionByDPI(UObject* WorldCont
 	FVector2D ViewportPosition;
 	USlateBlueprintLibrary::LocalToViewport
 		(WorldContextObject, WidgetGeometry, LocalCoordinate, PixelPosition, ViewportPosition);
-
 
 	// Set the widget's position on the screen
 	ObjectPtr->SetPositionInViewport(ViewportPosition, false);

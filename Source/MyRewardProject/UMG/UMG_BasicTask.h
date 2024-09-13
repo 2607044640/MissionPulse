@@ -48,6 +48,7 @@ public:
 	void BPOnMinusScoreEffect();
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnAddScoreEffect();
+	
 
 	TaskStateChanged OnButtonClicked;
 	TaskStateChanged OnMinusScore;

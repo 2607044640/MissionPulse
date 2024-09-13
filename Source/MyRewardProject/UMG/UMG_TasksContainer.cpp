@@ -201,6 +201,7 @@ void UUMG_TasksContainer::TaskDataTransformToTask(FTaskData InTaskData)
 void UUMG_TasksContainer::BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text)
 {
 	MySaveGIS->Global_AllDataToSave.GlobalDailyProgress = FCString::Atoi(*Text.ToString());
+	BPOnDailyProgressEditFinish();
 }
 
 void UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text)

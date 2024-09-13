@@ -30,6 +30,7 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	UFUNCTION()
 	void ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 	void TaskDataTransformToTask(FTaskData InTaskData);
+	
 	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 
@@ -38,8 +39,8 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 public:
 	OnMouseButtonEvent TaskContainerOnMouseButtonDown;
 	
-	int GiveMoney;
-
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPOnDailyProgressEditFinish();
 	UFUNCTION(BlueprintCallable)
 	FString FloatToText(float Input);
 	UFUNCTION(BlueprintCallable)
