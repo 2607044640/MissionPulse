@@ -178,7 +178,7 @@ void UUMG_TasksContainer::TaskDataTransformToTask(FTaskData InTaskData)
 		MySaveGIS->Global_AllDataToSave.GlobalDailyProgress_Saved = 0;
 
 		BasicTask->TaskData.SavedDays -= TempAnotherDay;
-		if (BasicTask->TaskData.SavedDays < 0)
+		if (BasicTask->TaskData.SavedDays <= 0)
 		{
 			if (BasicTask->TaskData.Days)
 			{
