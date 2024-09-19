@@ -150,11 +150,21 @@ void UUMG_BasicTask::ButtonMinusScoreOnClicked()
 	MySaveGIS->SaveAllData();
 }
 
-void UUMG_BasicTask::ButtonBackgroundOnClick()
+void UUMG_BasicTask::ButtonSelectOnClick()
 {
-	umg_ParentTasksContainer->RemoveOtherSelectedBasicTask();
+	if (umg_ParentTasksContainer->SelectedBasicTask == this)
+	{
+		umg_ParentTasksContainer->RemoveAllSelectedBasicTask();
+		umg_ParentTasksContainer->SelectedBasicTask = nullptr;
+		return;
+	}
+	
+	umg_ParentTasksContainer->RemoveAllSelectedBasicTask();
 	umg_ParentTasksContainer->SelectedBasicTask = this;
-	TaskOnSelected();
+	if (OnBasicTaskSelected.IsBound())
+	{
+		OnBasicTaskSelected.Broadcast();
+	}
 }
 
 void UUMG_BasicTask::NativeConstruct()
@@ -169,11 +179,12 @@ void UUMG_BasicTask::NativeConstruct()
 	}
 
 	PreviousColor = Border_UserVisualColor->GetBrushColor();
-	OnBasicTaskDrop.AddDynamic(this, &UUMG_BasicTask::TaskOnUnSelected);
+	OnBasicTaskUnselected.AddDynamic(this, &UUMG_BasicTask::TaskOnUnSelected);
+	OnBasicTaskSelected.AddDynamic(this, &UUMG_BasicTask::TaskOnSelected);
 
 	Image_Coin->OnMouseButtonDownEvent.BindUFunction(this,TEXT("OnImageClicked"));
 
-	ButtonBackground->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonBackgroundOnClick);
+	ButtonSelect->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonSelectOnClick);
 	Button_Finish->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnClicked);
 	Button_Finish->OnPressed.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnPressed);
 	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddScore);
@@ -248,9 +259,9 @@ void UUMG_BasicTask::CheckIfTaskFinish()
 bool UUMG_BasicTask::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
                                   UDragDropOperation* InOperation)
 {
-	if (OnBasicTaskDrop.IsBound())
+	if (OnBasicTaskUnselected.IsBound())
 	{
-		OnBasicTaskDrop.Broadcast();
+		OnBasicTaskUnselected.Broadcast();
 	}
 
 	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);

@@ -17,7 +17,7 @@ class UMySaveGIS;
 struct FTaskData;
 class UButton;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBasicTaskDrop);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBasicTaskSelect);
 DECLARE_MULTICAST_DELEGATE_OneParam(TaskStateChanged, UUMG_BasicTask* BasicTask)
 /**
  * 
@@ -31,7 +31,9 @@ public:
 	FTaskData TaskData;
 	
 	UPROPERTY(BlueprintAssignable)
-	FOnBasicTaskDrop OnBasicTaskDrop;
+	FOnBasicTaskSelect OnBasicTaskSelected;
+	UPROPERTY(BlueprintAssignable)
+	FOnBasicTaskSelect OnBasicTaskUnselected;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FLinearColor BP_Border_UserVisualColor_Color;
 	FLinearColor PreviousColor;
@@ -127,13 +129,13 @@ public:
 	void ButtonMinusScoreOnClicked();
 
 	UFUNCTION()
-	void ButtonBackgroundOnClick();
+	void ButtonSelectOnClick();
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();
 	void CheckIfTaskFinish();
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UButton* ButtonBackground;
+	UButton* ButtonSelect;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 	                          UDragDropOperation* InOperation) override;
 	// UUMG_BasicTask* CopySelf();

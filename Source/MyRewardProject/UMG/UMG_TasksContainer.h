@@ -52,7 +52,7 @@ public:
 
 	void TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask);
 	void TaskFinish(UUMG_BasicTask* Uumg_BasicTask);
-	void RemoveOtherSelectedBasicTask();
+	void RemoveAllSelectedBasicTask();
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnFinishDailyProgress();
 

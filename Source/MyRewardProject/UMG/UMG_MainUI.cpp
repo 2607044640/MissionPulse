@@ -16,9 +16,9 @@ bool UUMG_MainUI::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent
 {
 	if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(InOperation->Payload))
 	{
-		if (UMG_BasicTask->OnBasicTaskDrop.IsBound())
+		if (UMG_BasicTask->OnBasicTaskUnselected.IsBound())
 		{
-			UMG_BasicTask->OnBasicTaskDrop.Broadcast();
+			UMG_BasicTask->OnBasicTaskUnselected.Broadcast();
 		}
 	}
 	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);

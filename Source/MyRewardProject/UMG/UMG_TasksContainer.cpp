@@ -27,16 +27,16 @@ void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
 	}
 }
 
-void UUMG_TasksContainer::RemoveOtherSelectedBasicTask()
+void UUMG_TasksContainer::RemoveAllSelectedBasicTask()
 {
 	for (UWidget*
 	     Child : ScrollBox_Tasks->GetAllChildren())
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
-			if (UMG_BasicTask->OnBasicTaskDrop.IsBound())
+			if (UMG_BasicTask->OnBasicTaskUnselected.IsBound())
 			{
-				UMG_BasicTask->OnBasicTaskDrop.Broadcast();
+				UMG_BasicTask->OnBasicTaskUnselected.Broadcast();
 			}
 		}
 	}
@@ -45,9 +45,9 @@ void UUMG_TasksContainer::RemoveOtherSelectedBasicTask()
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
-			if (UMG_BasicTask->OnBasicTaskDrop.IsBound())
+			if (UMG_BasicTask->OnBasicTaskUnselected.IsBound())
 			{
-				UMG_BasicTask->OnBasicTaskDrop.Broadcast();
+				UMG_BasicTask->OnBasicTaskUnselected.Broadcast();
 			}
 		}
 	}
@@ -58,7 +58,7 @@ void UUMG_TasksContainer::RemoveOtherSelectedBasicTask()
 
 FReply UUMG_TasksContainer::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	RemoveOtherSelectedBasicTask();
+	RemoveAllSelectedBasicTask();
 	if (TaskContainerOnMouseButtonDown.IsBound())
 	{
 		TaskContainerOnMouseButtonDown.Broadcast();
@@ -81,19 +81,35 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 		{
 			bool bTempCheck = (SelectedScrollBox == ScrollBox_Tasks);
 			(bTempCheck ? ScrollBox_Tasks_Finish : ScrollBox_Tasks)->SetVisibility(ESlateVisibility::Collapsed);
-		}  
+		}
 
 		//Other operation
 		int32 TempIndex = SelectedScrollBox->GetChildIndex(InBasicTask);
-		TempIndex += IsDown ? -1 : 1;
+		IsDown ? TempIndex-- : TempIndex++;
+
+		//check if the task is collapsed. when it is,then index++ or --
+		//This is to allow users to click only once and the task will be moved, otherwise task may won't move
+		while (SelectedScrollBox->GetChildAt(TempIndex))
+		{
+			if (SelectedScrollBox->GetChildAt(TempIndex)->GetVisibility() == ESlateVisibility::Collapsed)
+			{
+				IsDown ? TempIndex-- : TempIndex++;
+			}
+			else
+			{
+				break;
+			}
+		}
+
 
 		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
 
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
-		
+
 		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
 
 		MySaveGIS->SaveAllData();
+
 
 		//set scroll offset
 		float ChildrenCount = SelectedScrollBox->GetChildrenCount() - 1;
@@ -120,6 +136,16 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 {
 	UUMG_BasicTask* BasicTask = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), UIClass);
 	ScrollBox_Tasks->AddChild(BasicTask);
+
+	//move new task to the top
+	SelectedBasicTask = BasicTask;
+	if (UScrollBox* SelectedScrollBox = Cast<UScrollBox>(SelectedBasicTask->GetParent()))
+	{
+		MyInsertChildAt(0, SelectedBasicTask, SelectedScrollBox);
+		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
+		RemoveAllSelectedBasicTask();
+	}
+
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
 	BasicTask->TaskData.bIsAddScore = true;
 	BasicTask->RefreshUI();
