@@ -158,7 +158,7 @@ void UUMG_BasicTask::ButtonSelectOnClick()
 		umg_ParentTasksContainer->SelectedBasicTask = nullptr;
 		return;
 	}
-	
+
 	umg_ParentTasksContainer->RemoveAllSelectedBasicTask();
 	umg_ParentTasksContainer->SelectedBasicTask = this;
 	if (OnBasicTaskSelected.IsBound())
@@ -191,6 +191,7 @@ void UUMG_BasicTask::NativeConstruct()
 	OnMinusScore.AddUObject(this, &UUMG_BasicTask::MinusScore);
 	OnButtonClicked.AddUObject(this, &UUMG_BasicTask::ButtonClicked);
 	ButtonAddScore->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonAddScoreOnClicked);
+	
 	ButtonMinusScore->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonMinusScoreOnClicked);
 
 	//finish

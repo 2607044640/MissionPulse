@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/EditableTextBox.h"
 #include "UMG_TasksContainer.generated.h"
 
 struct FTaskData;
@@ -21,30 +22,44 @@ class UTextBlock;
 
 DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 
+
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
-
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void ButtonAddTaskOnClick();
+	void SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem);
 	UFUNCTION()
 	void ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 	void TaskDataTransformToTask(FTaskData InTaskData);
-	
+
 	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
+	void ClearThenGenerateOptions();
 
+	template <class TClass, class TMemberFunc, class... TArgs>
+	void ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args);
+	void ChangeOption();
+
+
+	UFUNCTION()
+	void EditableTextBox_SortNameOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod);
+	UFUNCTION()
+	void Button_AddSortNameOnClicked();
+	UFUNCTION()
+	void Button_ChangeSortNamesOnClicked();
 	virtual void NativeConstruct() override;
 
 public:
 	OnMouseButtonEvent TaskContainerOnMouseButtonDown;
-	
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPAddOption();
+	bool bIsAddOption;
+	void ChangeChildrenSortname(UUMG_BasicTask* BasicTask,FText Sortname);
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnDailyProgressEditFinish();
 	UFUNCTION(BlueprintCallable)
-	FString FloatToText(float Input);
-	UFUNCTION(BlueprintCallable)
-	float TextBlockTextTofloat(UTextBlock* TextBlock);
 
 	UPanelSlot* MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox);
 
@@ -52,6 +67,7 @@ public:
 
 	void TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask);
 	void TaskFinish(UUMG_BasicTask* Uumg_BasicTask);
+	void BroadcastBasicTaskUnselected(UUMG_BasicTask* UMG_BasicTask);
 	void RemoveAllSelectedBasicTask();
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnFinishDailyProgress();
@@ -61,7 +77,10 @@ public:
 
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UTextBlock* TextBlock_Score;
-
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UEditableTextBox* EditableTextBox_SortName;
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+	UButton* Button_ChangeSortNames;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* Button_AddSortName;
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
@@ -79,7 +98,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	TSubclassOf<UUMG_BasicTask> UIClass;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-	
+
 	UPROPERTY()
 	UMySaveGIS* MySaveGIS;
 	double ScrollBoxOffset_Finish;

@@ -27,31 +27,17 @@ void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
 	}
 }
 
+void UUMG_TasksContainer::BroadcastBasicTaskUnselected(UUMG_BasicTask* UMG_BasicTask)
+{
+	if (UMG_BasicTask->OnBasicTaskUnselected.IsBound())
+	{
+		UMG_BasicTask->OnBasicTaskUnselected.Broadcast();
+	}
+}
+
 void UUMG_TasksContainer::RemoveAllSelectedBasicTask()
 {
-	for (UWidget*
-	     Child : ScrollBox_Tasks->GetAllChildren())
-	{
-		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
-		{
-			if (UMG_BasicTask->OnBasicTaskUnselected.IsBound())
-			{
-				UMG_BasicTask->OnBasicTaskUnselected.Broadcast();
-			}
-		}
-	}
-	for (UWidget*
-	     Child : ScrollBox_Tasks_Finish->GetAllChildren())
-	{
-		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
-		{
-			if (UMG_BasicTask->OnBasicTaskUnselected.IsBound())
-			{
-				UMG_BasicTask->OnBasicTaskUnselected.Broadcast();
-			}
-		}
-	}
-
+	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::BroadcastBasicTaskUnselected);
 	SelectedBasicTask = nullptr;
 }
 
@@ -137,6 +123,7 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	UUMG_BasicTask* BasicTask = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), UIClass);
 	ScrollBox_Tasks->AddChild(BasicTask);
 
+
 	//move new task to the top
 	SelectedBasicTask = BasicTask;
 	if (UScrollBox* SelectedScrollBox = Cast<UScrollBox>(SelectedBasicTask->GetParent()))
@@ -148,47 +135,30 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
 	BasicTask->TaskData.bIsAddScore = true;
-	BasicTask->RefreshUI();
 
 	MySaveGIS->SaveAllData();
+	BasicTask->RefreshUI();
+	ClearThenGenerateOptions();
+	ComboBoxString_TasksClassification->SetSelectedOption(BasicTask->TaskData.SortName);
 }
 
+void UUMG_TasksContainer::SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem)
+{
+	UMG_BasicTask->SetVisibility(ESlateVisibility::Collapsed);
+	if (!SelectedItem.Compare(InitialName_AllTasks))
+	{
+		UMG_BasicTask->SetVisibility(ESlateVisibility::Visible);
+	}
+	if (!UMG_BasicTask->TaskData.SortName.Compare(SelectedItem))
+	{
+		UMG_BasicTask->SetVisibility(ESlateVisibility::Visible);
+	}
+}
 
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
 	ESelectInfo::Type SelectionType)
 {
-	for (UWidget*
-	     Child : ScrollBox_Tasks->GetAllChildren())
-	{
-		Child->SetVisibility(ESlateVisibility::Collapsed);
-		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
-		{
-			if (!SelectedItem.Compare(InitalName_AllTasks))
-			{
-				Child->SetVisibility(ESlateVisibility::Visible);
-			}
-			if (!UMG_BasicTask->TaskData.SortName.Compare(SelectedItem))
-			{
-				Child->SetVisibility(ESlateVisibility::Visible);
-			}
-		}
-	}
-	for (UWidget*
-	     Child : ScrollBox_Tasks_Finish->GetAllChildren())
-	{
-		Child->SetVisibility(ESlateVisibility::Collapsed);
-		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
-		{
-			if (!SelectedItem.Compare(InitalName_AllTasks))
-			{
-				Child->SetVisibility(ESlateVisibility::Visible);
-			}
-			if (!UMG_BasicTask->TaskData.SortName.Compare(SelectedItem))
-			{
-				Child->SetVisibility(ESlateVisibility::Visible);
-			}
-		}
-	}
+	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::SetVisibilityWhenSelectionChanged, SelectedItem);
 }
 
 
@@ -235,24 +205,15 @@ void UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_
 	MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue = FCString::Atoi(*Text.ToString());
 }
 
-void UUMG_TasksContainer::NativeConstruct()
+void UUMG_TasksContainer::ClearThenGenerateOptions()
 {
-	Super::NativeConstruct();
-	//Init
+	ComboBoxString_TasksClassification->ClearOptions();
+
+	//ComboBoxString_TasksClassification
 	TArray<FString> Temp_SortNames;
-	Temp_SortNames.Add(InitalName_AllTasks);
-	ComboBoxString_TasksClassification->AddOption(InitalName_AllTasks);
-	ComboBoxString_TasksClassification->SetSelectedOption(InitalName_AllTasks);
-
-	BasicEditer_GlobalDailyProgress->OnEditFinish.AddUObject(
-		this, &UUMG_TasksContainer::BasicEditer_GlobalDailyProgressOnEditFinish);
-	BasicEditer_DailyProgressRewardValue->OnEditFinish.AddUObject(
-		this, &UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish);
-
-	//Bind Functions
-	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
-		this, &UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged);
-	ButtonAddTask->OnReleased.AddDynamic(this, &UUMG_TasksContainer::ButtonAddTaskOnClick);
+	Temp_SortNames.Add(InitialName_AllTasks);
+	ComboBoxString_TasksClassification->AddOption(InitialName_AllTasks);
+	ComboBoxString_TasksClassification->SetSelectedOption(InitialName_AllTasks);
 
 	//compare and add SortName
 	MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
@@ -274,7 +235,118 @@ void UUMG_TasksContainer::NativeConstruct()
 			Temp_SortNames.Add(InTaskData.SortName);
 			ComboBoxString_TasksClassification->AddOption(InTaskData.SortName);
 		}
+	}
+}
 
+template <class T>
+void CallAnyInAny(T* TAny, void (T::*AnyFunc)())
+{
+	(TAny->*AnyFunc)();
+}
+
+template <class TClass, class TMemberFunc, class... TArgs>
+void UUMG_TasksContainer::ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args)
+{
+	for (UWidget*
+	     Child : ScrollBox_Tasks->GetAllChildren())
+	{
+		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
+		{
+			(Instance->*Func)(UMG_BasicTask, std::forward<TArgs>(Args)...);
+		}
+	}
+	for (UWidget*
+	     Child : ScrollBox_Tasks_Finish->GetAllChildren())
+	{
+		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
+		{
+			(Instance->*Func)(UMG_BasicTask, std::forward<TArgs>(Args)...);
+		}
+	}
+}
+
+void UUMG_TasksContainer::ChangeOption()
+{
+	//ChangeOption
+	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::ChangeChildrenSortname,
+	                          EditableTextBox_SortName->GetText());
+	MySaveGIS->SaveAllData();
+	ClearThenGenerateOptions();
+	ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
+	EditableTextBox_SortName->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UUMG_TasksContainer::EditableTextBox_SortNameOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod)
+{
+	//fix press enter committed twice bug
+	if (CommitMethod == ETextCommit::OnCleared)
+	{
+		return;
+	}
+
+	if (bIsAddOption)
+	{
+		BPAddOption();
+		//implemented in blueprint
+	}
+	else
+	{
+		ChangeOption();
+	}
+	FString TempStr = FString::Printf(TEXT("committed"));
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+
+	EditableTextBox_SortName->SetText(FText::FromString(""));
+}
+
+void UUMG_TasksContainer::Button_AddSortNameOnClicked()
+{
+	bIsAddOption = true;
+	EditableTextBox_SortName->SetText(FText::FromString(""));
+}
+
+void UUMG_TasksContainer::Button_ChangeSortNamesOnClicked()
+{
+	// change visibility 
+	if (EditableTextBox_SortName->GetVisibility() == ESlateVisibility::Collapsed
+		&& ComboBoxString_TasksClassification->GetSelectedOption().Compare(InitialName_AllTasks))
+	{
+		EditableTextBox_SortName->SetVisibility(ESlateVisibility::Visible);
+	}
+	//if option is not equal all tasks then set text and set AddOption to false
+	if (ComboBoxString_TasksClassification->GetSelectedOption().Compare(InitialName_AllTasks))
+	{
+		bIsAddOption = false;
+		EditableTextBox_SortName->SetText(FText::FromString(ComboBoxString_TasksClassification->
+			GetSelectedOption()));
+	}
+}
+
+void UUMG_TasksContainer::NativeConstruct()
+{
+	Super::NativeConstruct();
+	//todo 1 when mouse cursor is hovered on the button of change option(make boolean),then do function 
+	Button_AddSortName->OnClicked.AddDynamic(this, &UUMG_TasksContainer::Button_AddSortNameOnClicked);
+	Button_ChangeSortNames->OnPressed.AddDynamic(this, &UUMG_TasksContainer::Button_ChangeSortNamesOnClicked);
+
+	EditableTextBox_SortName->OnTextCommitted.AddDynamic(
+		this, &UUMG_TasksContainer::EditableTextBox_SortNameOnTextCommitted);
+
+	BasicEditer_GlobalDailyProgress->OnEditFinish.AddUObject(
+		this, &UUMG_TasksContainer::BasicEditer_GlobalDailyProgressOnEditFinish);
+	BasicEditer_DailyProgressRewardValue->OnEditFinish.AddUObject(
+		this, &UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish);
+	//Bind Functions ComboBoxString_TasksClassification
+	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
+		this, &UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged);
+	ButtonAddTask->OnReleased.AddDynamic(this, &UUMG_TasksContainer::ButtonAddTaskOnClick);
+
+	ClearThenGenerateOptions();
+
+	for (FTaskData
+	     InTaskData : MySaveGIS->Global_AllDataToSave.TaskDatum)
+	{
 		//Add tasks
 		TaskDataTransformToTask(InTaskData);
 	}
@@ -293,16 +365,14 @@ void UUMG_TasksContainer::NativeConstruct()
 	MySaveGIS->SaveAllData();
 }
 
-FString UUMG_TasksContainer::FloatToText(float Input)
+void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname)
 {
-	return FString::SanitizeFloat(Input);
+	if (BasicTask->GetVisibility() == ESlateVisibility::Collapsed)
+	{
+		return;
+	}
+	BasicTask->TaskData.SortName = Sortname.ToString();
 }
-
-float UUMG_TasksContainer::TextBlockTextTofloat(UTextBlock* TextBlock)
-{
-	return FCString::Atof(*TextBlock->GetText().ToString());
-}
-
 
 UPanelSlot* UUMG_TasksContainer::MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox)
 {

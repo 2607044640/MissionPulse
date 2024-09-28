@@ -94,11 +94,11 @@ public:
 
 	//Daily Reward
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	float GlobalDailyProgress = 20;
+	float GlobalDailyProgress = 40;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	float GlobalDailyProgress_Saved;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	float DailyProgressRewardValue = 5;
+	float DailyProgressRewardValue = 10;
 	GENERATED_BODY()
 };
 
