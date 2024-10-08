@@ -263,6 +263,7 @@ void UUMG_TasksContainer::ExecuteFP_OperateChildren(TClass* Instance, TMemberFun
 			(Instance->*Func)(UMG_BasicTask, std::forward<TArgs>(Args)...);
 		}
 	}
+	
 }
 
 void UUMG_TasksContainer::ChangeOption()
@@ -293,10 +294,6 @@ void UUMG_TasksContainer::EditableTextBox_SortNameOnTextCommitted(const FText& T
 	{
 		ChangeOption();
 	}
-	FString TempStr = FString::Printf(TEXT("committed"));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-
 	EditableTextBox_SortName->SetText(FText::FromString(""));
 }
 
@@ -326,28 +323,25 @@ void UUMG_TasksContainer::Button_ChangeSortNamesOnClicked()
 void UUMG_TasksContainer::NativeConstruct()
 {
 	Super::NativeConstruct();
-	//todo 1 when mouse cursor is hovered on the button of change option(make boolean),then do function 
+	//Binds
 	Button_AddSortName->OnClicked.AddDynamic(this, &UUMG_TasksContainer::Button_AddSortNameOnClicked);
 	Button_ChangeSortNames->OnPressed.AddDynamic(this, &UUMG_TasksContainer::Button_ChangeSortNamesOnClicked);
-
 	EditableTextBox_SortName->OnTextCommitted.AddDynamic(
 		this, &UUMG_TasksContainer::EditableTextBox_SortNameOnTextCommitted);
-
 	BasicEditer_GlobalDailyProgress->OnEditFinish.AddUObject(
 		this, &UUMG_TasksContainer::BasicEditer_GlobalDailyProgressOnEditFinish);
 	BasicEditer_DailyProgressRewardValue->OnEditFinish.AddUObject(
 		this, &UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish);
-	//Bind Functions ComboBoxString_TasksClassification
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
 		this, &UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged);
 	ButtonAddTask->OnReleased.AddDynamic(this, &UUMG_TasksContainer::ButtonAddTaskOnClick);
 
 	ClearThenGenerateOptions();
 
+	//Add tasks
 	for (FTaskData
 	     InTaskData : MySaveGIS->Global_AllDataToSave.TaskDatum)
 	{
-		//Add tasks
 		TaskDataTransformToTask(InTaskData);
 	}
 
@@ -404,6 +398,7 @@ int32 UUMG_TasksContainer::CalcAndGetIndex(FVector2D MousePosition, UPanelWidget
 		{
 			SelectChild = Child;
 		}
+		
 	}
 
 	// Return the index of the selected child widget or 0 if none found
