@@ -17,5 +17,4 @@ class MYREWARDPROJECT_API UBFL_GetClasses : public UBlueprintFunctionLibrary
 public:
 	UFUNCTION(BlueprintCallable, Category="Utility", meta=(WorldContext="WorldContextObject"))
 	static UUMG_MainUI* GetMainUI(UObject* WorldContextObject);
-
 };
