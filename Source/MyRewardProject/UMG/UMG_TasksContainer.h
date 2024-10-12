@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/EditableTextBox.h"
@@ -23,9 +25,19 @@ class UTextBlock;
 DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 
 
+
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
+	// C++20 Concepts 约束的模板函数
+	template <typename Func>
+	void ExecuteForAllChildrenWithConcepts( Func Function);
+	
+	// template <class TClass>
+   // void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
+	template <class TClass>
+	void ExecuteForAllChildrenWithStdFunction( std::function<void(TClass*)> Func);
+	
 	UFUNCTION(BlueprintCallable)
 	void ButtonAddTaskOnClick();
 	void SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem);
@@ -48,6 +60,8 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	void Button_AddSortNameOnClicked();
 	UFUNCTION()
 	void Button_ChangeSortNamesOnClicked();
+	UFUNCTION()
+	void ButtonChangeSortName_TaskOnClick();
 	virtual void NativeConstruct() override;
 
 public:
@@ -108,7 +122,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	double OffsetOfScroll = 110;
 
-
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UButton* ButtonChangeSortName_Task;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	UUMG_BasicTask* SelectedBasicTask;
 

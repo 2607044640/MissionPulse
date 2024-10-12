@@ -31,7 +31,6 @@ class MYREWARDPROJECT_API UUMG_BasicEditer : public UUserWidget
 
 	UFUNCTION()
 	void ButtonOnClicked();
-	
 	virtual void NativeConstruct() override;
 
 public:

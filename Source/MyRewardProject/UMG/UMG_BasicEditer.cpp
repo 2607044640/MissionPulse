@@ -82,6 +82,7 @@ void UUMG_BasicEditer::ButtonOnClicked()
 	EditableTextBox_Basic->SetText(TextBlock->GetText());
 }
 
+
 void UUMG_BasicEditer::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -91,7 +92,6 @@ void UUMG_BasicEditer::NativeConstruct()
 	}
 	//bind
 	Button->OnClicked.AddDynamic(this, &UUMG_BasicEditer::ButtonOnClicked);
-
 	EditableTextBox_Basic->OnTextChanged.AddDynamic(this, &UUMG_BasicEditer::EditableTextBox_BasicOnTextChanged);
 	EditableTextBox_Basic->OnTextCommitted.AddDynamic(this, &UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted);
 	AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD());

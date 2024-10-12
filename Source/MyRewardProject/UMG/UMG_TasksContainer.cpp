@@ -155,10 +155,68 @@ void UUMG_TasksContainer::SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_
 	}
 }
 
+
+
+template <typename Func>
+void UUMG_TasksContainer::ExecuteForAllChildrenWithConcepts(Func Function)
+{
+	for (UWidget* Child : ScrollBox_Tasks->GetAllChildren())
+	{
+		if (UUMG_BasicTask* CastedChild = Cast<UUMG_BasicTask>(Child))
+		{
+			Function(CastedChild); // 调用泛型函数
+		}
+	}
+	for (UWidget* Child : ScrollBox_Tasks_Finish->GetAllChildren())
+	{
+		if (UUMG_BasicTask* CastedChild = Cast<UUMG_BasicTask>(Child))
+		{
+			Function(CastedChild); // 调用泛型函数
+		}
+	}
+}
+
+//todo
+#include <functional>
+template <class TClass>
+void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func)
+{
+	for (UWidget* Child : ScrollBox_Tasks_Finish->GetAllChildren())
+	{
+		if (TClass* CastedChild = Cast<TClass>(Child))
+		{
+			Func(CastedChild);
+		}
+	}
+	for (UWidget* Child : ScrollBox_Tasks->GetAllChildren())
+	{
+		if (TClass* CastedChild = Cast<TClass>(Child))
+		{
+			Func(CastedChild);
+		}
+	}
+}
+
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
 	ESelectInfo::Type SelectionType)
 {
-	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::SetVisibilityWhenSelectionChanged, SelectedItem);
+	//todo 1
+	auto TaskFilter = [SelectedItem](UUMG_BasicTask* UMG_BasicTask)
+	{
+		UMG_BasicTask->SetVisibility(ESlateVisibility::Collapsed);
+		if (!SelectedItem.Compare(InitialName_AllTasks))
+		{
+			UMG_BasicTask->SetVisibility(ESlateVisibility::Visible);
+		}
+		if (!UMG_BasicTask->TaskData.SortName.Compare(SelectedItem))
+		{
+			UMG_BasicTask->SetVisibility(ESlateVisibility::Visible);
+		}
+	};
+	ExecuteForAllChildrenWithConcepts(TaskFilter);
+	
+	// ExecuteForAllChildrenWithStdFunction<UUMG_BasicTask>(TaskFilter);
+	// ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::SetVisibilityWhenSelectionChanged, SelectedItem);
 }
 
 
@@ -244,6 +302,7 @@ void CallAnyInAny(T* TAny, void (T::*AnyFunc)())
 	(TAny->*AnyFunc)();
 }
 
+
 template <class TClass, class TMemberFunc, class... TArgs>
 void UUMG_TasksContainer::ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args)
 {
@@ -257,14 +316,13 @@ void UUMG_TasksContainer::ExecuteFP_OperateChildren(TClass* Instance, TMemberFun
 	}
 	for (UWidget*
 	     Child : ScrollBox_Tasks_Finish->GetAllChildren())
-	{
+
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
 			(Instance->*Func)(UMG_BasicTask, std::forward<TArgs>(Args)...);
 		}
-	}
-	
 }
+
 
 void UUMG_TasksContainer::ChangeOption()
 {
@@ -320,21 +378,30 @@ void UUMG_TasksContainer::Button_ChangeSortNamesOnClicked()
 	}
 }
 
+void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
+{
+	FString TempStr = FString::Printf(TEXT("Nice"));
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+}
+
 void UUMG_TasksContainer::NativeConstruct()
 {
 	Super::NativeConstruct();
+
 	//Binds
-	Button_AddSortName->OnClicked.AddDynamic(this, &UUMG_TasksContainer::Button_AddSortNameOnClicked);
-	Button_ChangeSortNames->OnPressed.AddDynamic(this, &UUMG_TasksContainer::Button_ChangeSortNamesOnClicked);
+	ButtonChangeSortName_Task->OnClicked.AddDynamic(this, &ThisClass::ButtonChangeSortName_TaskOnClick);
+	Button_AddSortName->OnClicked.AddDynamic(this, &ThisClass::Button_AddSortNameOnClicked);
+	Button_ChangeSortNames->OnPressed.AddDynamic(this, &ThisClass::Button_ChangeSortNamesOnClicked);
 	EditableTextBox_SortName->OnTextCommitted.AddDynamic(
-		this, &UUMG_TasksContainer::EditableTextBox_SortNameOnTextCommitted);
+		this, &ThisClass::EditableTextBox_SortNameOnTextCommitted);
 	BasicEditer_GlobalDailyProgress->OnEditFinish.AddUObject(
-		this, &UUMG_TasksContainer::BasicEditer_GlobalDailyProgressOnEditFinish);
+		this, &ThisClass::BasicEditer_GlobalDailyProgressOnEditFinish);
 	BasicEditer_DailyProgressRewardValue->OnEditFinish.AddUObject(
-		this, &UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish);
+		this, &ThisClass::BasicEditer_DailyProgressRewardValueOnEditFinish);
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
-		this, &UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged);
-	ButtonAddTask->OnReleased.AddDynamic(this, &UUMG_TasksContainer::ButtonAddTaskOnClick);
+		this, &ThisClass::ComboBoxString_TasksClassification_OnSelectionChanged);
+	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
 
 	ClearThenGenerateOptions();
 
@@ -398,7 +465,6 @@ int32 UUMG_TasksContainer::CalcAndGetIndex(FVector2D MousePosition, UPanelWidget
 		{
 			SelectChild = Child;
 		}
-		
 	}
 
 	// Return the index of the selected child widget or 0 if none found
