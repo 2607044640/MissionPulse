@@ -14,9 +14,11 @@ UCLASS()
 class MYREWARDPROJECT_API AMyHUD : public AHUD
 {
 	GENERATED_BODY()
-
+	
 	template <class T>
 	void MakeUserWidget(T*& ObjectPtr, TSubclassOf<T> UIClass);
+	void OnWindowFocusChanged(bool bIsFocused);
+	bool GetIsGameWindowFocused();
 	virtual void BeginPlay() override;
 
 public:

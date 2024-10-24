@@ -91,7 +91,7 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
 
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
-
+		
 		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
 
 		MySaveGIS->SaveAllData();
@@ -195,6 +195,7 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<voi
 			Func(CastedChild);
 		}
 	}
+	
 }
 
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
@@ -443,7 +444,6 @@ UPanelSlot* UUMG_TasksContainer::MyInsertChildAt(int32 Index, UWidget* Content, 
 	ScrollBox->Slots.Insert(Content->Slot, FMath::Clamp(Index, 0, ScrollBox->Slots.Num()));
 	return NewSlot;
 }
-
 
 int32 UUMG_TasksContainer::CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget)
 {

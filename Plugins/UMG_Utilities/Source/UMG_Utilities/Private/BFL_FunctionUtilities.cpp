@@ -87,9 +87,9 @@ UUserWidget* UBFL_FunctionUtilities::JFLerpWidgetToAnotherWidget(UObject* WorldC
 	return nullptr;
 }
 
-
 void UBFL_FunctionUtilities::SortPanelWidgetsChildren(UPanelWidget* InPanelWidget)
 {
+	
 	TArray<UWidget*> Children = InPanelWidget->GetAllChildren();
 
 	Children.Sort([InPanelWidget](const UWidget& A, const UWidget& B)
