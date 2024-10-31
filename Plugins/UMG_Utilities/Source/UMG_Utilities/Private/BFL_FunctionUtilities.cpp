@@ -218,7 +218,7 @@ float UBFL_FunctionUtilities::JFNumberDeOrIncreaseGradually(float Number, float 
 	}
 }
 
-FText UBFL_FunctionUtilities::JFFloatToText(float InputFloat)
+FText UBFL_FunctionUtilities::JFFloatToText(const float& InputFloat)
 {
 	FNumberFormattingOptions* NumberFormattingOptions = new FNumberFormattingOptions();
 	NumberFormattingOptions->SetUseGrouping(false);

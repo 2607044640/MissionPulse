@@ -29,7 +29,6 @@ DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
-	// C++20 Concepts 约束的模板函数
 	template <typename Func>
 	void ExecuteForAllChildrenWithConcepts( Func Function);
 	
@@ -37,7 +36,6 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
    // void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
 	template <class TClass>
 	void ExecuteForAllChildrenWithStdFunction( std::function<void(TClass*)> Func);
-	
 	UFUNCTION(BlueprintCallable)
 	void ButtonAddTaskOnClick();
 	void SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem);
@@ -65,6 +63,8 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	virtual void NativeConstruct() override;
 
 public:
+	UFUNCTION(BlueprintCallable)
+	void GenerateTasksFromGlobalData();
 	OnMouseButtonEvent TaskContainerOnMouseButtonDown;
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPAddOption();

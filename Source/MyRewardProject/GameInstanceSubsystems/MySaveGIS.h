@@ -133,6 +133,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SaveData")
 	bool SaveData(FAllDataToSave AllDataToSave);
 
+	UFUNCTION(BlueprintCallable)
+	void FetchAndParseJSON(const FString& Url);
 	UFUNCTION(BlueprintCallable, Category = "LoadData")
 	bool LoadData(FAllDataToSave& AllDataToSave);
 

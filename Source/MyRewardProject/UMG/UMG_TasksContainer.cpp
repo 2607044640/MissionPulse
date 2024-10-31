@@ -386,6 +386,30 @@ void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
 	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 }
 
+void UUMG_TasksContainer::GenerateTasksFromGlobalData()
+{
+	//Init Stat
+	ClearThenGenerateOptions();
+	//Add tasks
+	for (FTaskData
+	     InTaskData : MySaveGIS->Global_AllDataToSave.TaskDatum)
+	{
+		TaskDataTransformToTask(InTaskData);
+	}
+	//Init Global UI Value
+	//todo trans to main refresh.
+	TextBlock_Score->SetText(
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalTotalScore));
+	TextBlock_GlobalDailyProgress_Saved->SetText(
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress_Saved));
+	BasicEditer_GlobalDailyProgress->TextBlock->SetText(
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress));
+	BasicEditer_DailyProgressRewardValue->TextBlock->SetText(
+		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
+
+	MySaveGIS->SaveAllData();
+}
+
 void UUMG_TasksContainer::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -403,28 +427,6 @@ void UUMG_TasksContainer::NativeConstruct()
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
 		this, &ThisClass::ComboBoxString_TasksClassification_OnSelectionChanged);
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
-
-	ClearThenGenerateOptions();
-
-	//Add tasks
-	for (FTaskData
-	     InTaskData : MySaveGIS->Global_AllDataToSave.TaskDatum)
-	{
-		TaskDataTransformToTask(InTaskData);
-	}
-
-
-	//Init UI
-	TextBlock_Score->SetText(
-		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalTotalScore));
-	TextBlock_GlobalDailyProgress_Saved->SetText(
-		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress_Saved));
-	BasicEditer_GlobalDailyProgress->TextBlock->SetText(
-		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress));
-	BasicEditer_DailyProgressRewardValue->TextBlock->SetText(
-		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
-
-	MySaveGIS->SaveAllData();
 }
 
 void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname)

@@ -44,7 +44,7 @@ public:
 	                                                 TSubclassOf<AActor> ActorToSpawn,
 	                                                 APlayerController* PlayerController);
 	UFUNCTION(BlueprintCallable, Category="Utility", BlueprintPure)
-	static FText JFFloatToText(float InputFloat);
+	static FText JFFloatToText(const float& InputFloat);
 
 	UFUNCTION(BlueprintCallable, Category = "UI", meta=(WorldContext="WorldContextObject"))
 	static FVector2D JFGetWidgetViewPortPosition(UObject* WorldContextObject,UWidget* Widget);

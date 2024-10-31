@@ -4,6 +4,8 @@
 #include "MySaveGIS.h"
 
 #include "Components/ScrollBox.h"
+#include "HttpModule.h"
+#include "Interfaces/IHttpResponse.h"
 #include "Kismet/GameplayStatics.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/BlueprintFunctionLibraries/BFL_GetClasses.h"
@@ -18,8 +20,10 @@ class AMyHUD;
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	LoadData(Global_AllDataToSave);
+	// LoadData(Global_AllDataToSave);
+	// FetchAndParseJSON(TEXT("https://raw.githubusercontent.com/2607044640/NewTestOfHostJson/refs/heads/main/ThisTest.json"));
 }
+
 
 void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
 {
@@ -49,7 +53,7 @@ void UMySaveGIS::AddScore(float AddNum)
 {
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
 	Global_AllDataToSave.GlobalDailyProgress_Saved += AddNum;
-	
+
 	if (Global_AllDataToSave.GlobalDailyProgress <= Global_AllDataToSave.GlobalDailyProgress_Saved &&
 		Global_AllDataToSave.GlobalDailyProgress)
 	{
@@ -152,6 +156,118 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	}
 	return false;
 }
+
+//
+// size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp)
+// {
+// 	userp->append((char*)contents, size * nmemb);
+// 	return size * nmemb;
+// }
+//
+// void FetchAndParseJSON(const std::string& url)
+// {
+// 	CURL* curl = curl_easy_init();
+// 	if (curl)
+// 	{
+// 		std::string readBuffer;
+// 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+// 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+// 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+// 		curl_easy_perform(curl);
+// 		curl_easy_cleanup(curl);
+// 		/*
+// 				// Parse JSON
+// 				auto jsonData = parse(readBuffer);
+// 		
+// 				// Example: Access data
+// 				for (const auto& task : jsonData["TaskData"])
+// 				{
+// 					std::string title = task["Title"];
+// 					int score = task["Score"];
+// 					// Do something with the data...
+// 				}
+// 				*/
+// 	}
+// }
+
+
+void UMySaveGIS::FetchAndParseJSON(const FString& Url)
+{
+	// Create the HTTP request
+	TSharedRef<IHttpRequest> HttpRequest = FHttpModule::Get().CreateRequest();
+	HttpRequest->OnProcessRequestComplete().BindLambda(
+		[&](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+		{
+			// Log the validity of the response
+			FString gweg = FString::Printf(
+				TEXT("Response.IsValid(): %s"), Response.IsValid() ? TEXT("True") : TEXT("False"));
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, gweg, true, FVector2D(3, 3));
+			UE_LOG(LogTemp, Error, TEXT("%s"), *gweg);
+
+			// Log success of the request
+			FString oaigw = FString::Printf(TEXT("bWasSuccessful: %s"), bWasSuccessful ? TEXT("True") : TEXT("False"));
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, oaigw, true, FVector2D(3, 3));
+			UE_LOG(LogTemp, Error, TEXT("%s"), *oaigw);
+
+			if (bWasSuccessful && Response.IsValid())
+			{
+				// Get and trim the raw response
+				FString RawResponse = Request.Get()->GetResponse()->GetContentAsString();
+				UE_LOG(LogTemp, Error, TEXT("Raw Response: %s"), *RawResponse); // Log the raw response
+
+				// Parse JSON
+				TSharedRef<TJsonReader<>> SharedRefJson = TJsonReaderFactory<>::Create(RawResponse);
+				TSharedPtr<FJsonObject> OutObjectJson;
+
+				if (FJsonSerializer::Deserialize(SharedRefJson, OutObjectJson))
+				{
+					// Successfully deserialized
+					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("JSON Parsed Successfully"), true,
+					                                 FVector2D(3, 3));
+
+					const TArray<TSharedPtr<FJsonValue>>* JsonValues;
+					if (OutObjectJson->TryGetArrayField(TEXT("TaskData"), JsonValues))
+					{
+						for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
+						{
+							if (TSharedPtr<FJsonObject> TaskObject = JsonValue->AsObject())
+							{
+								FTaskData TaskData;
+
+								// Use TryGet functions to avoid failures
+								TaskObject->TryGetStringField(TEXT("SortName"), TaskData.SortName);
+								TaskObject->TryGetStringField(TEXT("Title"), TaskData.Title);
+								TaskObject->TryGetStringField(TEXT("Detail"), TaskData.Detail);
+								TaskObject->TryGetNumberField(TEXT("Score"), TaskData.Score);
+								TaskObject->TryGetNumberField(TEXT("Days"), TaskData.Days);
+								TaskObject->TryGetNumberField(TEXT("SavedDays"), TaskData.SavedDays);
+								TaskObject->TryGetNumberField(TEXT("Times"), TaskData.Times);
+								TaskObject->TryGetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
+								TaskObject->TryGetBoolField(TEXT("bIsAddScore"), TaskData.bIsAddScore);
+
+								Global_AllDataToSave.TaskDatum.Add(TaskData);
+							}
+						}
+					}
+					if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
+					{
+						MyHUD->MainUI->TasksContainer->GenerateTasksFromGlobalData();
+					}
+				}
+				else
+				{
+					// Log error in deserialization
+					UE_LOG(LogTemp, Error, TEXT("Failed to deserialize JSON"));
+				}
+			}
+		});
+
+	// Set up the request
+	HttpRequest->SetURL(Url);
+	HttpRequest->SetVerb("GET");
+	HttpRequest->ProcessRequest();
+}
+
 
 bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 {

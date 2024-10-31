@@ -10,7 +10,7 @@ public class MyRewardProject : ModuleRules
 
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
-			"Core", "CoreUObject", "Engine", "InputCore", "UMG", "SlateCore", "Slate", "Json", "JsonUtilities","UMG_Utilities"
+			"Core", "CoreUObject", "Engine", "InputCore", "UMG", "SlateCore", "Slate", "Json", "JsonUtilities","UMG_Utilities","HTTP"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "UMG_Utilities" });
