@@ -15,12 +15,103 @@
 #include "MyRewardProject/UMG/UMG_TasksContainer.h"
 
 
-class AMyHUD;
+void UMySaveGIS::GetFileFromGitHub(const FString& FilePath)
+{
+	FString URL = FString::Printf(TEXT("https://api.github.com/repos/USERNAME/REPO/contents/%s"), *FilePath);
+    
+	TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
+	Request->OnProcessRequestComplete().BindUObject(this, &UMySaveGIS::OnGetFileResponse);
+	Request->SetURL(URL);
+	Request->SetVerb(TEXT("GET"));
+	SetAuthorization(Request);
+	Request->ProcessRequest();
+}
+
+void UMySaveGIS::OnGetFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+{
+	if (bWasSuccessful && Response.IsValid())
+	{
+		// Parse the JSON response
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+
+		if (FJsonSerializer::Deserialize(Reader, JsonObject))
+		{
+			// Access the JSON data
+			FString Content = JsonObject->GetStringField("content");
+
+			// Decode base64
+			TArray<uint8> DecodedBytes;
+			if (FBase64::Decode(Content, DecodedBytes))
+			{
+				// Convert the decoded bytes back to a string
+				FString DecodedContent = FString(UTF8_TO_TCHAR(DecodedBytes.GetData()));
+				// Do something with the content
+			}
+			else
+			{
+				// Handle decode error
+			}
+		}
+	}
+}
+void UMySaveGIS::UpdateFileOnGitHub(const FString& FilePath, const FString& NewContent)
+{
+	FString URL = FString::Printf(TEXT("https://api.github.com/repos/2607044640/NewTestOfHostJson/contents/ThisTest.json"));
+	// FString URL = FString::Printf(TEXT("https://api.github.com/repos/USERNAME/REPO/contents/%s"), *FilePath);
+	
+	TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
+	Request->OnProcessRequestComplete().BindUObject(this, &UMySaveGIS::OnUpdateFileResponse);
+	Request->SetURL(FilePath);
+	Request->SetVerb(TEXT("PUT"));
+	SetAuthorization(Request);
+
+	// Prepare JSON payload
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+	JsonObject->SetStringField("message", "Updating file");
+	JsonObject->SetStringField("content", FBase64::Encode(NewContent));
+
+	FString
+		TempStr = FString::Printf(TEXT("%s"),*NewContent);
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+
+	
+	JsonObject->SetStringField("sha", "FILE_SHA"); // You need the SHA of the file for updates
+
+	FString JsonOutput;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonOutput);
+	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+	Request->SetContentAsString(JsonOutput);
+	Request->ProcessRequest();
+}
+
+void UMySaveGIS::OnUpdateFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+{
+	if (bWasSuccessful && Response.IsValid())
+	{
+		// Handle response after updating file
+	}
+}
+
+void UMySaveGIS::SetAuthorization(FHttpRequestPtr Request)
+{
+	FString
+		TempStr = FString::Printf(TEXT("Nice"));
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+
+	Request->SetHeader(TEXT("Authorization"), TEXT("//todo"));
+	Request->SetHeader(TEXT("Accept"), TEXT("application/vnd.github.v3+json"));
+}
+
 
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	// LoadData(Global_AllDataToSave);
+	LoadData(Global_AllDataToSave);
+	//todo
 	// FetchAndParseJSON(TEXT("https://raw.githubusercontent.com/2607044640/NewTestOfHostJson/refs/heads/main/ThisTest.json"));
 }
 
@@ -96,6 +187,16 @@ float UMySaveGIS::GetDailyProgressRewardValue()
 	return Global_AllDataToSave.DailyProgressRewardValue;
 }
 
+
+
+void UMySaveGIS::DelayToGenerateJson()
+{
+	if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
+	{
+		MyHUD->MainUI->TasksContainer->GenerateTasksFromGlobalData();
+	}
+}
+
 bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 {
 	TSharedPtr<FJsonObject> MainJsonObject(new FJsonObject);
@@ -151,6 +252,9 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 			// FString TempStr1 = FString::Printf(TEXT("File saved successfully at %s"), *FilePath);
 			// if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr1, true);
 			// UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr1);
+
+			
+			
 			return true;
 		}
 	}
@@ -189,6 +293,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 // 				*/
 // 	}
 // }
+
 
 
 void UMySaveGIS::FetchAndParseJSON(const FString& Url)
@@ -249,10 +354,8 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 							}
 						}
 					}
-					if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
-					{
-						MyHUD->MainUI->TasksContainer->GenerateTasksFromGlobalData();
-					}
+					 FTimerHandle TempHandle;
+					GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UMySaveGIS::DelayToGenerateJson, 0.5f);
 				}
 				else
 				{

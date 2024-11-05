@@ -25,26 +25,28 @@ class UTextBlock;
 DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 
 
-
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
 	template <typename Func>
-	void ExecuteForAllChildrenWithConcepts( Func Function);
-	
+	void ExecuteForAllChildrenWithConcepts(Func Function);
+
 	// template <class TClass>
-   // void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
+	// void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
 	template <class TClass>
-	void ExecuteForAllChildrenWithStdFunction( std::function<void(TClass*)> Func);
+	void ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func);
 	UFUNCTION(BlueprintCallable)
 	void ButtonAddTaskOnClick();
+	
 	void SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem);
+	
 	UFUNCTION()
 	void ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 	void TaskDataTransformToTask(FTaskData InTaskData);
 
 	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
+	UFUNCTION(BlueprintCallable)
 	void ClearThenGenerateOptions();
 
 	template <class TClass, class TMemberFunc, class... TArgs>
@@ -61,6 +63,10 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	UFUNCTION()
 	void ButtonChangeSortName_TaskOnClick();
 	virtual void NativeConstruct() override;
+	bool bIsChangeSortName_Task;
+	UPROPERTY()
+	UUMG_BasicTask* TempSelectedBasicTask;
+	FString TempStringRecorderForSelection;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -69,7 +75,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPAddOption();
 	bool bIsAddOption;
-	void ChangeChildrenSortname(UUMG_BasicTask* BasicTask,FText Sortname);
+	void ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnDailyProgressEditFinish();
@@ -124,7 +130,7 @@ public:
 
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UButton* ButtonChangeSortName_Task;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	UUMG_BasicTask* SelectedBasicTask;
 

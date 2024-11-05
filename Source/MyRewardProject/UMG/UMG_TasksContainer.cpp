@@ -91,7 +91,7 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
 
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
-		
+
 		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
 
 		MySaveGIS->SaveAllData();
@@ -156,7 +156,6 @@ void UUMG_TasksContainer::SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_
 }
 
 
-
 template <typename Func>
 void UUMG_TasksContainer::ExecuteForAllChildrenWithConcepts(Func Function)
 {
@@ -164,20 +163,20 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithConcepts(Func Function)
 	{
 		if (UUMG_BasicTask* CastedChild = Cast<UUMG_BasicTask>(Child))
 		{
-			Function(CastedChild); // 调用泛型函数
+			Function(CastedChild);
 		}
 	}
 	for (UWidget* Child : ScrollBox_Tasks_Finish->GetAllChildren())
 	{
 		if (UUMG_BasicTask* CastedChild = Cast<UUMG_BasicTask>(Child))
 		{
-			Function(CastedChild); // 调用泛型函数
+			Function(CastedChild);
 		}
 	}
 }
 
-//todo
 #include <functional>
+
 template <class TClass>
 void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func)
 {
@@ -195,13 +194,27 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<voi
 			Func(CastedChild);
 		}
 	}
-	
 }
 
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
-	ESelectInfo::Type SelectionType)
+                                                                                ESelectInfo::Type SelectionType)
 {
-	//todo 1
+	if (bIsChangeSortName_Task && SelectedBasicTask)
+	{
+		if (TempSelectedBasicTask != SelectedBasicTask)
+		{
+			TempSelectedBasicTask = SelectedBasicTask;
+			TempStringRecorderForSelection = SelectedBasicTask->TaskData.SortName;
+		}
+		//The order can not be wrong
+		SelectedBasicTask->TaskData.SortName = SelectedItem;
+
+		bIsChangeSortName_Task = false;
+		ComboBoxString_TasksClassification->SetSelectedOption(TempStringRecorderForSelection);
+
+		MySaveGIS->SaveAllData();
+		return;
+	}
 	auto TaskFilter = [SelectedItem](UUMG_BasicTask* UMG_BasicTask)
 	{
 		UMG_BasicTask->SetVisibility(ESlateVisibility::Collapsed);
@@ -215,7 +228,7 @@ void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(
 		}
 	};
 	ExecuteForAllChildrenWithConcepts(TaskFilter);
-	
+
 	// ExecuteForAllChildrenWithStdFunction<UUMG_BasicTask>(TaskFilter);
 	// ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::SetVisibilityWhenSelectionChanged, SelectedItem);
 }
@@ -338,7 +351,7 @@ void UUMG_TasksContainer::ChangeOption()
 
 void UUMG_TasksContainer::EditableTextBox_SortNameOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod)
 {
-	//fix press enter committed twice bug
+	//fix press enter cause committed twice bug
 	if (CommitMethod == ETextCommit::OnCleared)
 	{
 		return;
@@ -381,6 +394,10 @@ void UUMG_TasksContainer::Button_ChangeSortNamesOnClicked()
 
 void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
 {
+	ComboBoxString_TasksClassification->MyComboBox->SetIsOpen(true);
+	bIsChangeSortName_Task = true;
+
+
 	FString TempStr = FString::Printf(TEXT("Nice"));
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
 	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
@@ -397,7 +414,7 @@ void UUMG_TasksContainer::GenerateTasksFromGlobalData()
 		TaskDataTransformToTask(InTaskData);
 	}
 	//Init Global UI Value
-	//todo trans to main refresh.
+	//todo trans it to main refresh.
 	TextBlock_Score->SetText(
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalTotalScore));
 	TextBlock_GlobalDailyProgress_Saved->SetText(
@@ -407,7 +424,7 @@ void UUMG_TasksContainer::GenerateTasksFromGlobalData()
 	BasicEditer_DailyProgressRewardValue->TextBlock->SetText(
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
 
-	MySaveGIS->SaveAllData();
+	// MySaveGIS->SaveAllData();
 }
 
 void UUMG_TasksContainer::NativeConstruct()
@@ -427,6 +444,9 @@ void UUMG_TasksContainer::NativeConstruct()
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
 		this, &ThisClass::ComboBoxString_TasksClassification_OnSelectionChanged);
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
+
+	//todo
+	GenerateTasksFromGlobalData();
 }
 
 void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname)

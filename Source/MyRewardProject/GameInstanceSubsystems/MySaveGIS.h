@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/IHttpRequest.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "MySaveGIS.generated.h"
 
@@ -72,14 +73,6 @@ struct FRewardPerDays //todo 模仿原神或者皇室的那个奖励令牌系统
 	GENERATED_BODY()
 };
 
-USTRUCT(BlueprintType)
-
-struct FGlobalData //todo Add to AllDataToSave
-{
-	UPROPERTY(EditAnywhere, Category=JFSetting)
-	float TotalScore;
-	GENERATED_BODY()
-};
 
 
 USTRUCT(BlueprintType)
@@ -126,12 +119,26 @@ public:
 	float GetGlobalDailyProgress_Saved();
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
+
+	UFUNCTION(BlueprintCallable)
+	void GetFileFromGitHub(const FString& FilePath);
+	UFUNCTION(BlueprintCallable)
+	void UpdateFileOnGitHub(const FString& FilePath, const FString& NewContent);
+
+	void OnGetFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	void OnUpdateFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+	void SetAuthorization(FHttpRequestPtr Request);
+
+
+	void DelayToGenerateJson();
+
 	FAllDataToSave Global_AllDataToSave;
 
 	float AnotherDay = 0;
 
 	UFUNCTION(BlueprintCallable, Category = "SaveData")
 	bool SaveData(FAllDataToSave AllDataToSave);
+
 
 	UFUNCTION(BlueprintCallable)
 	void FetchAndParseJSON(const FString& Url);

@@ -106,6 +106,16 @@ void UBFL_FunctionUtilities::SortPanelWidgetsChildren(UPanelWidget* InPanelWidge
 	}
 }
 
+/**
+ * lerp a widget
+ * @param WorldContextObject this
+ * @param WidgetToDoLerp the widget you want to do lerp function
+ * @param StartWidget will automatically get the start widget position
+ * @param EndWidget will automatically get the end widget position
+ * @param LerpValue the lerp value between start and end
+ * @param RandomPosition fill a random vector2D value to do Lerp function randomly
+ * @return WidgetToDoLerp
+ */
 UUserWidget* UBFL_FunctionUtilities::JF2LerpWidgetWithRandomToAnotherWidget(UObject* WorldContextObject,
                                                                             UUserWidget* WidgetToDoLerp,
                                                                             UWidget* StartWidget, UWidget* EndWidget,
@@ -141,7 +151,7 @@ UUserWidget* UBFL_FunctionUtilities::JF2LerpWidgetWithRandomToAnotherWidget(UObj
 
 	WidgetToDoLerp->SetPositionInViewport(NewPositionFinal, false);
 
-	return nullptr;
+	return WidgetToDoLerp;
 }
 
 AActor* UBFL_FunctionUtilities::JFSpawnActorAtWidgetWorldPosition(UObject* WorldContextObject, UWidget* Widget,
@@ -204,17 +214,25 @@ bool UBFL_FunctionUtilities::CheckMouseIsInsideOfWidget_DragDropEvent(UObject* W
 	return false;
 }
 
-
-float UBFL_FunctionUtilities::JFNumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed,
+/**
+ * De Or Increase a number gradually, for the UI number to show gradually
+ * @param Number_UI The UI Text Number you want to modify
+ * @param NumberToReach The Number you want to reach
+ * @param Speed The speed of number to reach SavedNumber
+ * @param LessThan If the difference between Number and SaveNumber is less than this param value.then return SavedNumber
+ * @return The calculated Number_UI (Speed  * (SavedNumber > Number ? 1 : -1)) + Number_UI
+ */
+float UBFL_FunctionUtilities::JFNumberDeOrIncreaseGradually(float Number_UI, float NumberToReach, float Speed,
                                                             float LessThan)
 {
-	if (FMath::Abs(Number - SavedNumber) < LessThan)
+	if (FMath::Abs(Number_UI - NumberToReach) < LessThan)
 	{
-		return SavedNumber;
+		return NumberToReach;
 	}
 	else
 	{
-		return Speed / 100.f * (SavedNumber > Number ? 1 : -1) + Number;
+		//set a 
+		return (Speed*FMath::FRandRange(0.7f,1.3f) / 100.f * (NumberToReach > Number_UI ? 1.f : -1.f)) + Number_UI;
 	}
 }
 

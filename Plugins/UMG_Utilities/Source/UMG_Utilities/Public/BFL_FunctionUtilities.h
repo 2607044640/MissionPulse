@@ -21,7 +21,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Utility", meta=(WorldContext="WorldContextObject"))
 	static bool CheckMouseIsInsideOfWidget_DragDropEvent(UObject* WorldContextObject, UWidget* ChildWidget, FVector2D InDragDropEventGetScreenSpacePosition);
 	UFUNCTION(BlueprintCallable, Category="UI",meta=(Keywords="NumberIncrease,NumberDecrease,ChangeNumber"))
-	static float JFNumberDeOrIncreaseGradually(float Number, float SavedNumber, float Speed = 3.f,
+	static float JFNumberDeOrIncreaseGradually(float Number_UI, float NumberToReach, float Speed = 3.f,
 	                                           float LessThan = 0.2f);
 
 	UFUNCTION(BlueprintCallable, Category="UI", meta=(WorldContext="WorldContextObject"),meta=(Keywords="CreateWidget"))
