@@ -41,7 +41,6 @@ void UUMG_TasksContainer::RemoveAllSelectedBasicTask()
 	SelectedBasicTask = nullptr;
 }
 
-
 FReply UUMG_TasksContainer::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	RemoveAllSelectedBasicTask();
@@ -316,25 +315,32 @@ void CallAnyInAny(T* TAny, void (T::*AnyFunc)())
 	(TAny->*AnyFunc)();
 }
 
-
 template <class TClass, class TMemberFunc, class... TArgs>
 void UUMG_TasksContainer::ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args)
 {
-	for (UWidget*
-	     Child : ScrollBox_Tasks->GetAllChildren())
+	// Cache the children arrays to avoid multiple GetAllChildren() calls
+	const TArray<UWidget*>& TasksChildren = ScrollBox_Tasks->GetAllChildren();
+	const TArray<UWidget*>& TasksFinishChildren = ScrollBox_Tasks_Finish->GetAllChildren();
+
+	// Pre-allocate expected size
+	int32 TotalChildren = TasksChildren.Num() + TasksFinishChildren.Num();
+	if (TotalChildren == 0) return;
+
+	// Process main tasks
+	for (UWidget* Child : TasksChildren)
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
 			(Instance->*Func)(UMG_BasicTask, std::forward<TArgs>(Args)...);
 		}
 	}
-	for (UWidget*
-	     Child : ScrollBox_Tasks_Finish->GetAllChildren())
-
+	for (UWidget* Child : TasksFinishChildren)
+	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
 			(Instance->*Func)(UMG_BasicTask, std::forward<TArgs>(Args)...);
 		}
+	}
 }
 
 
