@@ -74,7 +74,6 @@ struct FRewardPerDays //todo 模仿原神或者皇室的那个奖励令牌系统
 };
 
 
-
 USTRUCT(BlueprintType)
 
 struct FAllDataToSave
@@ -120,14 +119,18 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
 
-	UFUNCTION(BlueprintCallable)
-	void GetFileFromGitHub(const FString& FilePath);
-	UFUNCTION(BlueprintCallable)
-	void UpdateFileOnGitHub(const FString& FilePath, const FString& NewContent);
 
-	void OnGetFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-	void OnUpdateFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-	void SetAuthorization(FHttpRequestPtr Request);
+	//Success
+	UFUNCTION(BlueprintCallable)
+	void UploadFileToURLWithAPI(const FString& URL, const FString
+	                            & AuthorizationName,
+	                            const FString& AuthorizationValue,
+	                            const FString& VerbOrMethod = TEXT("PUT"),
+	                            const FString& ContentTypeName = TEXT("Content-Type"),
+	                            const FString& ContentTypeValue = TEXT("application/json"));
+	void OnHttpRequestCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+
+	
 
 
 	void DelayToGenerateJson();

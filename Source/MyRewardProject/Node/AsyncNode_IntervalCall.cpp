@@ -45,6 +45,5 @@ void UAsyncNode_IntervalCall::Activate()
 {
 	Super::Activate();
 	World = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
-
 	World->GetTimerManager().SetTimer(TimeHandle, this, &UAsyncNode_IntervalCall::UpdateFunction, IntervalCall, true);
 }

@@ -13,98 +13,93 @@
 #include "MyRewardProject/UMG/UMG_BasicTask.h"
 #include "MyRewardProject/UMG/UMG_MainUI.h"
 #include "MyRewardProject/UMG/UMG_TasksContainer.h"
+#include "Interfaces/IHttpRequest.h"
+#include "Misc/ScopeLock.h"
 
 
-void UMySaveGIS::GetFileFromGitHub(const FString& FilePath)
+void UMySaveGIS::UploadFileToURLWithAPI(const FString& URL, const FString
+                                        & AuthorizationName, const FString& AuthorizationValue,
+                                        const FString& VerbOrMethod, const FString& ContentTypeName,
+                                        const FString& ContentTypeValue)
 {
-	FString URL = FString::Printf(TEXT("https://api.github.com/repos/USERNAME/REPO/contents/%s"), *FilePath);
-    
-	TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &UMySaveGIS::OnGetFileResponse);
+	// Ensure the HTTP module is available
+	FHttpModule* Http = &FHttpModule::Get();
+	if (!Http) { return; }
+
+	// Create your HTTP Request
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
+
+	// Set the URL
 	Request->SetURL(URL);
-	Request->SetVerb(TEXT("GET"));
-	SetAuthorization(Request);
-	Request->ProcessRequest();
-}
 
-void UMySaveGIS::OnGetFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
-{
-	if (bWasSuccessful && Response.IsValid())
+	// Set the method to POST
+	Request->SetVerb(VerbOrMethod);
+
+	// Set the content type header
+	Request->SetHeader(ContentTypeName, ContentTypeValue);
+	Request->SetHeader(AuthorizationName, AuthorizationValue);
+
+	// Load the JSON file
+	FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
+
+	FString JsonContent;
+	if (FFileHelper::LoadFileToString(JsonContent, *FilePath))
 	{
-		// Parse the JSON response
-		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+		// Set the request content
+		Request->SetContentAsString(JsonContent);
 
-		if (FJsonSerializer::Deserialize(Reader, JsonObject))
-		{
-			// Access the JSON data
-			FString Content = JsonObject->GetStringField("content");
+		// Process the response
+		Request->OnProcessRequestComplete().BindLambda(
+			[](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+			{
+				if (bWasSuccessful && Response->GetResponseCode() == 200)
+				{
+					FString
+						TempStr = FString::Printf(TEXT("Success: %s"), *Response->GetContentAsString());
+					if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+				}
+				else
+				{
+					FString
+						TempStr = FString::Printf(TEXT("HTTP Request failed: %s"), *Response->GetContentAsString());
+					if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+				}
+			});
 
-			// Decode base64
-			TArray<uint8> DecodedBytes;
-			if (FBase64::Decode(Content, DecodedBytes))
-			{
-				// Convert the decoded bytes back to a string
-				FString DecodedContent = FString(UTF8_TO_TCHAR(DecodedBytes.GetData()));
-				// Do something with the content
-			}
-			else
-			{
-				// Handle decode error
-			}
-		}
+		// Execute the request
+		Request->ProcessRequest();
 	}
-}
-void UMySaveGIS::UpdateFileOnGitHub(const FString& FilePath, const FString& NewContent)
-{
-	FString URL = FString::Printf(TEXT("https://api.github.com/repos/2607044640/NewTestOfHostJson/contents/ThisTest.json"));
-	// FString URL = FString::Printf(TEXT("https://api.github.com/repos/USERNAME/REPO/contents/%s"), *FilePath);
-	
-	TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &UMySaveGIS::OnUpdateFileResponse);
-	Request->SetURL(FilePath);
-	Request->SetVerb(TEXT("PUT"));
-	SetAuthorization(Request);
-
-	// Prepare JSON payload
-	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
-	JsonObject->SetStringField("message", "Updating file");
-	JsonObject->SetStringField("content", FBase64::Encode(NewContent));
-
-	FString
-		TempStr = FString::Printf(TEXT("%s"),*NewContent);
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-
-	
-	JsonObject->SetStringField("sha", "FILE_SHA"); // You need the SHA of the file for updates
-
-	FString JsonOutput;
-	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonOutput);
-	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
-
-	Request->SetContentAsString(JsonOutput);
-	Request->ProcessRequest();
-}
-
-void UMySaveGIS::OnUpdateFileResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
-{
-	if (bWasSuccessful && Response.IsValid())
+	else
 	{
-		// Handle response after updating file
+		FString
+			TempStr = FString::Printf(TEXT("Failed to load JSON file"));
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 	}
 }
 
-void UMySaveGIS::SetAuthorization(FHttpRequestPtr Request)
-{
-	FString
-		TempStr = FString::Printf(TEXT("Nice"));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 
-	Request->SetHeader(TEXT("Authorization"), TEXT("//todo"));
-	Request->SetHeader(TEXT("Accept"), TEXT("application/vnd.github.v3+json"));
+void UMySaveGIS::OnHttpRequestCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+{
+	if (bWasSuccessful && Response->GetResponseCode() == 200)
+	{
+		FString
+			TempStr = FString::Printf(TEXT("Success: %s"), *Response->GetContentAsString());
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+	}
+	else
+	{
+		FString
+			TempStr = FString::Printf(TEXT("HTTP Request failed: %s"), *Response->GetContentAsString());
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+
+	}
 }
+
 
 
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
@@ -188,7 +183,6 @@ float UMySaveGIS::GetDailyProgressRewardValue()
 }
 
 
-
 void UMySaveGIS::DelayToGenerateJson()
 {
 	if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
@@ -253,15 +247,13 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 			// if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr1, true);
 			// UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr1);
 
-			
-			
 			return true;
 		}
 	}
 	return false;
 }
 
-//
+
 // size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp)
 // {
 // 	userp->append((char*)contents, size * nmemb);
@@ -293,7 +285,6 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 // 				*/
 // 	}
 // }
-
 
 
 void UMySaveGIS::FetchAndParseJSON(const FString& Url)
@@ -354,7 +345,7 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 							}
 						}
 					}
-					 FTimerHandle TempHandle;
+					FTimerHandle TempHandle;
 					GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UMySaveGIS::DelayToGenerateJson, 0.5f);
 				}
 				else
