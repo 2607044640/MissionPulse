@@ -34,9 +34,9 @@ void UUMG_BasicEditer::EditableTextBox_BasicOnTextChanged(const FText& Text)
 
 void UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod)
 {
-	if (OnEditFinish.IsBound())
+	if (OnEditFinishedCommitted.IsBound())
 	{
-		OnEditFinish.Broadcast(BasicTask, EditableTextBox_Basic->GetText());
+		OnEditFinishedCommitted.Broadcast(BasicTask, EditableTextBox_Basic->GetText());
 		TextBlock->SetText(EditableTextBox_Basic->GetText());
 	}
 	else
@@ -50,7 +50,7 @@ void UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted(const FText& Text, E
 void UUMG_BasicEditer::ThisOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
 	if (WidgetSwitcher->GetActiveWidget() == Button)return;
-	
+
 	WidgetSwitcher->SetActiveWidget(Button);
 	UMySaveGIS* MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
 	MySaveGIS->SaveAllData();
@@ -58,15 +58,15 @@ void UUMG_BasicEditer::ThisOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText In
 
 void UUMG_BasicEditer::TaskContainerOnMouseButtonDownFunc()
 {
-	if (OnEditFinish.IsBound())
+	if (OnEditFinishedCommitted.IsBound())
 	{
 		if (WidgetSwitcher->GetActiveWidget() == Button)return;
-		OnEditFinish.Broadcast(BasicTask, EditableTextBox_Basic->GetText());
+		OnEditFinishedCommitted.Broadcast(BasicTask, EditableTextBox_Basic->GetText());
 		TextBlock->SetText(EditableTextBox_Basic->GetText());
 	}
 	else
 	{
-		FString TempStr = FString::Printf(TEXT("NotValid: TaskData.MyStructIsValid()&&BasicTask"));
+		FString TempStr = FString::Printf(TEXT("NotValid: OnEditFinish.IsBound()"));
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
 		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 	}
@@ -86,7 +86,7 @@ void UUMG_BasicEditer::ButtonOnClicked()
 void UUMG_BasicEditer::NativeConstruct()
 {
 	Super::NativeConstruct();
-	if (OnEditFinish.IsBound())
+	if (OnEditFinishedCommitted.IsBound())
 	{
 		return;
 	}
@@ -100,7 +100,7 @@ void UUMG_BasicEditer::NativeConstruct()
 	TaskContainer->TaskContainerOnMouseButtonDown.AddUObject(
 		this, &UUMG_BasicEditer::TaskContainerOnMouseButtonDownFunc);
 
-	OnEditFinish.AddUObject(this, &UUMG_BasicEditer::ThisOnEditFinish);
+	OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicEditer::ThisOnEditFinish);
 
 	//get data from parent
 	if (UUMG_BasicTask* OwningWidget = GetParent()->GetTypedOuter<UUMG_BasicTask>())

@@ -17,14 +17,36 @@
 #include "Misc/ScopeLock.h"
 
 
-void UMySaveGIS::UploadFileToURLWithAPI(const FString& URL, const FString
+bool UMySaveGIS::UploadFileToURLWithAPI(const FString& URL, const FString
                                         & AuthorizationName, const FString& AuthorizationValue,
+                                        FString& OutDebugMessage,
                                         const FString& VerbOrMethod, const FString& ContentTypeName,
                                         const FString& ContentTypeValue)
 {
+	// Validate input parameters
+	if (URL.IsEmpty() || AuthorizationName.IsEmpty() || AuthorizationValue.IsEmpty() ||
+		VerbOrMethod.IsEmpty() || ContentTypeName.IsEmpty() || ContentTypeValue.IsEmpty())
+	{
+		OutDebugMessage = TEXT("UploadFileToURLWithAPI: Invalid input parameters");
+		UE_LOG(LogTemp, Error, TEXT("UploadFileToURLWithAPI: Invalid input parameters"));
+		return false;
+	}
+
 	// Ensure the HTTP module is available
+	if (!FModuleManager::Get().IsModuleLoaded("HTTP"))
+	{
+		OutDebugMessage = TEXT("HTTP module not loaded");
+		UE_LOG(LogTemp, Error, TEXT("HTTP module not loaded"));
+		return false;
+	}
+
 	FHttpModule* Http = &FHttpModule::Get();
-	if (!Http) { return; }
+	if (!Http)
+	{
+		OutDebugMessage = TEXT("Failed to get HTTP module");
+		UE_LOG(LogTemp, Error, TEXT("Failed to get HTTP module"));
+		return false;
+	}
 
 	// Create your HTTP Request
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
@@ -40,46 +62,93 @@ void UMySaveGIS::UploadFileToURLWithAPI(const FString& URL, const FString
 	Request->SetHeader(AuthorizationName, AuthorizationValue);
 
 	// Load the JSON file
-	FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
-
-	FString JsonContent;
-	if (FFileHelper::LoadFileToString(JsonContent, *FilePath))
+	if (!SaveDataFileName.IsEmpty())
 	{
-		// Set the request content
-		Request->SetContentAsString(JsonContent);
+		FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
+		if (!FPaths::FileExists(FilePath))
+		{
+			OutDebugMessage = FString::Printf(TEXT("JSON file does not exist at path: %s"), *FilePath);
+			UE_LOG(LogTemp, Error, TEXT("JSON file does not exist at path: %s"), *FilePath);
+			return false;
+		}
 
-		// Process the response
-		Request->OnProcessRequestComplete().BindLambda(
-			[](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+		FString JsonContent;
+		if (FFileHelper::LoadFileToString(JsonContent, *FilePath))
+		{
+			// Set the request content
+			Request->SetContentAsString(JsonContent);
+
+			bool bRequestSuccessful = false;
+
+			// Process the response
+			Request->OnProcessRequestComplete().BindLambda(
+				[&bRequestSuccessful, &OutDebugMessage](FHttpRequestPtr Request, FHttpResponsePtr Response,
+				                                        bool bWasSuccessful)
+				{
+					if (!Request.IsValid() || !Response.IsValid())
+					{
+						OutDebugMessage = TEXT("Invalid Request or Response");
+						UE_LOG(LogTemp, Error, TEXT("Invalid Request or Response"));
+						bRequestSuccessful = false;
+						return;
+					}
+
+					if (bWasSuccessful && Response->GetResponseCode() == 200)
+					{
+						FString TempStr = FString::Printf(TEXT("Success: %s"), *Response->GetContentAsString());
+						OutDebugMessage = TempStr;
+						if (GEngine)
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+						}
+						UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+						bRequestSuccessful = true;
+					}
+					else
+					{
+						FString TempStr = FString::Printf(TEXT("HTTP Request failed: %s"),
+						                                  Response.IsValid()
+							                                  ? *Response->GetContentAsString()
+							                                  : TEXT("Invalid Response"));
+						OutDebugMessage = TempStr;
+						if (GEngine)
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+						}
+						UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+						bRequestSuccessful = false;
+					}
+				});
+
+			// Execute the request
+			if (!Request->ProcessRequest())
 			{
-				if (bWasSuccessful && Response->GetResponseCode() == 200)
-				{
-					FString
-						TempStr = FString::Printf(TEXT("Success: %s"), *Response->GetContentAsString());
-					if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-				}
-				else
-				{
-					FString
-						TempStr = FString::Printf(TEXT("HTTP Request failed: %s"), *Response->GetContentAsString());
-					if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-				}
-			});
+				OutDebugMessage = TEXT("Failed to process HTTP request");
+				UE_LOG(LogTemp, Error, TEXT("Failed to process HTTP request"));
+				return false;
+			}
 
-		// Execute the request
-		Request->ProcessRequest();
+			return bRequestSuccessful;
+		}
+		else
+		{
+			FString TempStr = FString::Printf(TEXT("Failed to load JSON file"));
+			OutDebugMessage = TempStr;
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+			}
+			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+			return false;
+		}
 	}
 	else
 	{
-		FString
-			TempStr = FString::Printf(TEXT("Failed to load JSON file"));
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+		OutDebugMessage = TEXT("SaveDataFileName is empty");
+		UE_LOG(LogTemp, Error, TEXT("SaveDataFileName is empty"));
+		return false;
 	}
 }
-
 
 void UMySaveGIS::OnHttpRequestCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
@@ -96,10 +165,8 @@ void UMySaveGIS::OnHttpRequestCompleted(FHttpRequestPtr Request, FHttpResponsePt
 			TempStr = FString::Printf(TEXT("HTTP Request failed: %s"), *Response->GetContentAsString());
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
 		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-
 	}
 }
-
 
 
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
@@ -227,6 +294,12 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
 	OtherJsonObject->SetNumberField(TEXT("DailyProgressRewardValue"), Global_AllDataToSave.DailyProgressRewardValue);
 
+	OtherJsonObject->SetStringField(TEXT("URL"), Global_AllDataToSave.URL);
+	OtherJsonObject->SetStringField(TEXT("AuthorizationName"), Global_AllDataToSave.AuthorizationName);
+	OtherJsonObject->SetStringField(TEXT("AuthorizationValue"), Global_AllDataToSave.AuthorizationValue);
+	OtherJsonObject->SetStringField(TEXT("VerbOrMethod"), Global_AllDataToSave.VerbOrMethod);
+	OtherJsonObject->SetStringField(TEXT("ContentTypeName"), Global_AllDataToSave.ContentTypeName);
+	OtherJsonObject->SetStringField(TEXT("ContentTypeValue"), Global_AllDataToSave.ContentTypeValue);
 
 	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
 
@@ -413,6 +486,19 @@ bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
 							TEXT("GlobalDailyProgress"));
 						Global_AllDataToSave.GlobalDailyProgress_Saved = OtherObject->GetNumberField(
 							TEXT("GlobalDailyProgress_Saved"));
+
+						Global_AllDataToSave.URL = OtherObject->GetStringField(
+							TEXT("URL"));
+						Global_AllDataToSave.AuthorizationName = OtherObject->GetStringField(
+							TEXT("AuthorizationName"));
+						Global_AllDataToSave.AuthorizationValue = OtherObject->GetStringField(
+							TEXT("AuthorizationValue"));
+						Global_AllDataToSave.VerbOrMethod = OtherObject->GetStringField(
+							TEXT("VerbOrMethod"));
+						Global_AllDataToSave.ContentTypeName = OtherObject->GetStringField(
+							TEXT("ContentTypeName"));
+						Global_AllDataToSave.ContentTypeValue = OtherObject->GetStringField(
+							TEXT("ContentTypeValue"));
 
 						//AnotherDay calc
 						int32 TempDayPrevious = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));

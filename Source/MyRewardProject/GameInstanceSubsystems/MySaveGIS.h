@@ -79,18 +79,31 @@ USTRUCT(BlueprintType)
 struct FAllDataToSave
 {
 public:
-	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, Category=Basic, BlueprintReadWrite)
 	TArray<FTaskData> TaskDatum;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Basic)
 	float GlobalTotalScore;
 
 	//Daily Reward
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=DailyReward)
 	float GlobalDailyProgress = 40;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=DailyReward)
 	float GlobalDailyProgress_Saved;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=DailyReward)
 	float DailyProgressRewardValue = 10;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FString URL;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FString AuthorizationName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FString AuthorizationValue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FString VerbOrMethod = TEXT("PUT");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FString ContentTypeName = TEXT("Content-Type");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FString ContentTypeValue = TEXT("application/json");
 	GENERATED_BODY()
 };
 
@@ -119,18 +132,16 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
 
-
-	//Success
+	
 	UFUNCTION(BlueprintCallable)
-	void UploadFileToURLWithAPI(const FString& URL, const FString
+	bool UploadFileToURLWithAPI(const FString& URL, const FString
 	                            & AuthorizationName,
 	                            const FString& AuthorizationValue,
+	                            FString& OutDebugMessage,
 	                            const FString& VerbOrMethod = TEXT("PUT"),
 	                            const FString& ContentTypeName = TEXT("Content-Type"),
 	                            const FString& ContentTypeValue = TEXT("application/json"));
 	void OnHttpRequestCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-
-	
 
 
 	void DelayToGenerateJson();

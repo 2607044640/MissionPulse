@@ -402,11 +402,6 @@ void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
 {
 	ComboBoxString_TasksClassification->MyComboBox->SetIsOpen(true);
 	bIsChangeSortName_Task = true;
-
-
-	FString TempStr = FString::Printf(TEXT("Nice"));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-	UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 }
 
 void UUMG_TasksContainer::GenerateTasksFromGlobalData()
@@ -429,7 +424,7 @@ void UUMG_TasksContainer::GenerateTasksFromGlobalData()
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress));
 	BasicEditer_DailyProgressRewardValue->TextBlock->SetText(
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
-
+	
 	// MySaveGIS->SaveAllData();
 }
 
@@ -443,9 +438,9 @@ void UUMG_TasksContainer::NativeConstruct()
 	Button_ChangeSortNames->OnPressed.AddDynamic(this, &ThisClass::Button_ChangeSortNamesOnClicked);
 	EditableTextBox_SortName->OnTextCommitted.AddDynamic(
 		this, &ThisClass::EditableTextBox_SortNameOnTextCommitted);
-	BasicEditer_GlobalDailyProgress->OnEditFinish.AddUObject(
+	BasicEditer_GlobalDailyProgress->OnEditFinishedCommitted.AddUObject(
 		this, &ThisClass::BasicEditer_GlobalDailyProgressOnEditFinish);
-	BasicEditer_DailyProgressRewardValue->OnEditFinish.AddUObject(
+	BasicEditer_DailyProgressRewardValue->OnEditFinishedCommitted.AddUObject(
 		this, &ThisClass::BasicEditer_DailyProgressRewardValueOnEditFinish);
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
 		this, &ThisClass::ComboBoxString_TasksClassification_OnSelectionChanged);

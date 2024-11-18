@@ -211,12 +211,12 @@ void UUMG_BasicTask::NativeConstruct()
 	OnTaskNotFinish.AddUObject(umg_ParentTasksContainer, &UUMG_TasksContainer::TaskNotFinish);
 
 	//edit
-	SlotTitle->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotTitleOnEditFinish);
-	SlotSavedTimes->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotSavedTimesOnEditFinish);
-	SlotTimes->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotTimesOnEditFinish);
-	SlotScore->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotScoreOnEditFinish);
-	SlotSavedDays->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotSavedDaysOnEditFinish);
-	SlotDays->OnEditFinish.AddUObject(this, &UUMG_BasicTask::SlotDaysOnEditFinish);
+	SlotTitle->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotTitleOnEditFinish);
+	SlotSavedTimes->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotSavedTimesOnEditFinish);
+	SlotTimes->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotTimesOnEditFinish);
+	SlotScore->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotScoreOnEditFinish);
+	SlotSavedDays->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotSavedDaysOnEditFinish);
+	SlotDays->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotDaysOnEditFinish);
 
 	//Other
 	MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();

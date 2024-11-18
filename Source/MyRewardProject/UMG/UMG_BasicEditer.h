@@ -43,13 +43,18 @@ public:
 	UPROPERTY()
 	UUMG_TasksContainer* TaskContainer;
 
+	//In other file, We should AddUObject to OnEditFinishedCommitted instead of AddDynamic to OnCommitted of EditableTextBox_Basic  
+	OnTaskEditedChanged OnEditFinishedCommitted;
 
-	OnTaskEditedChanged OnEditFinish;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UTextBlock* TextBlock;
-	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UEditableTextBox* EditableTextBox_Basic;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	bool bIsNumeric = true;
+
+protected:
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UEditableTextBox* EditableTextBox_Basic;
+
 	GENERATED_BODY()
 };
