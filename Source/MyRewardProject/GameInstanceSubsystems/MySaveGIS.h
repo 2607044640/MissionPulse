@@ -99,7 +99,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString AuthorizationValue;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	FString VerbOrMethod = TEXT("PUT");
+	FString VerbOrMethod_Save = TEXT("PUT");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	FString VerbOrMethod_Load = TEXT("GET");
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString ContentTypeName = TEXT("Content-Type");
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
@@ -132,18 +135,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
 
-	
-	UFUNCTION(BlueprintCallable)
-	bool UploadFileToURLWithAPI(const FString& URL, const FString
-	                            & AuthorizationName,
-	                            const FString& AuthorizationValue,
-	                            FString& OutDebugMessage,
-	                            const FString& VerbOrMethod = TEXT("PUT"),
-	                            const FString& ContentTypeName = TEXT("Content-Type"),
-	                            const FString& ContentTypeValue = TEXT("application/json"));
-	void OnHttpRequestCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-
-
 	void DelayToGenerateJson();
 
 	FAllDataToSave Global_AllDataToSave;
@@ -156,8 +147,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FetchAndParseJSON(const FString& Url);
+
+	UFUNCTION(BlueprintCallable)
+	bool AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETRequest = false);
 	UFUNCTION(BlueprintCallable, Category = "LoadData")
-	bool LoadData(FAllDataToSave& AllDataToSave);
+	bool LoadData();
 
 	GENERATED_BODY()
 };

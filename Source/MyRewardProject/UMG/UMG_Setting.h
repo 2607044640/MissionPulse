@@ -20,7 +20,9 @@ public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_BasicEditer* BasicEditer_URL;
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
-	UUMG_BasicEditer* BasicEditer_VerbOrMethod;
+	UUMG_BasicEditer* BasicEditer_VerbOrMethod_Save;
+	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
+	UUMG_BasicEditer* BasicEditer_VerbOrMethod_Load;
 	
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UUMG_BasicEditer* BasicEditer_ContentTypeValue;

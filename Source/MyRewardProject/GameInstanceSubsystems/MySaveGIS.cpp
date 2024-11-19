@@ -16,165 +16,12 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Misc/ScopeLock.h"
 
-
-bool UMySaveGIS::UploadFileToURLWithAPI(const FString& URL, const FString
-                                        & AuthorizationName, const FString& AuthorizationValue,
-                                        FString& OutDebugMessage,
-                                        const FString& VerbOrMethod, const FString& ContentTypeName,
-                                        const FString& ContentTypeValue)
-{
-	// Validate input parameters
-	if (URL.IsEmpty() || AuthorizationName.IsEmpty() || AuthorizationValue.IsEmpty() ||
-		VerbOrMethod.IsEmpty() || ContentTypeName.IsEmpty() || ContentTypeValue.IsEmpty())
-	{
-		OutDebugMessage = TEXT("UploadFileToURLWithAPI: Invalid input parameters");
-		UE_LOG(LogTemp, Error, TEXT("UploadFileToURLWithAPI: Invalid input parameters"));
-		return false;
-	}
-
-	// Ensure the HTTP module is available
-	if (!FModuleManager::Get().IsModuleLoaded("HTTP"))
-	{
-		OutDebugMessage = TEXT("HTTP module not loaded");
-		UE_LOG(LogTemp, Error, TEXT("HTTP module not loaded"));
-		return false;
-	}
-
-	FHttpModule* Http = &FHttpModule::Get();
-	if (!Http)
-	{
-		OutDebugMessage = TEXT("Failed to get HTTP module");
-		UE_LOG(LogTemp, Error, TEXT("Failed to get HTTP module"));
-		return false;
-	}
-
-	// Create your HTTP Request
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
-
-	// Set the URL
-	Request->SetURL(URL);
-
-	// Set the method to POST
-	Request->SetVerb(VerbOrMethod);
-
-	// Set the content type header
-	Request->SetHeader(ContentTypeName, ContentTypeValue);
-	Request->SetHeader(AuthorizationName, AuthorizationValue);
-
-	// Load the JSON file
-	if (!SaveDataFileName.IsEmpty())
-	{
-		FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
-		if (!FPaths::FileExists(FilePath))
-		{
-			OutDebugMessage = FString::Printf(TEXT("JSON file does not exist at path: %s"), *FilePath);
-			UE_LOG(LogTemp, Error, TEXT("JSON file does not exist at path: %s"), *FilePath);
-			return false;
-		}
-
-		FString JsonContent;
-		if (FFileHelper::LoadFileToString(JsonContent, *FilePath))
-		{
-			// Set the request content
-			Request->SetContentAsString(JsonContent);
-
-			bool bRequestSuccessful = false;
-
-			// Process the response
-			Request->OnProcessRequestComplete().BindLambda(
-				[&bRequestSuccessful, &OutDebugMessage](FHttpRequestPtr Request, FHttpResponsePtr Response,
-				                                        bool bWasSuccessful)
-				{
-					if (!Request.IsValid() || !Response.IsValid())
-					{
-						OutDebugMessage = TEXT("Invalid Request or Response");
-						UE_LOG(LogTemp, Error, TEXT("Invalid Request or Response"));
-						bRequestSuccessful = false;
-						return;
-					}
-
-					if (bWasSuccessful && Response->GetResponseCode() == 200)
-					{
-						FString TempStr = FString::Printf(TEXT("Success: %s"), *Response->GetContentAsString());
-						OutDebugMessage = TempStr;
-						if (GEngine)
-						{
-							GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-						}
-						UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-						bRequestSuccessful = true;
-					}
-					else
-					{
-						FString TempStr = FString::Printf(TEXT("HTTP Request failed: %s"),
-						                                  Response.IsValid()
-							                                  ? *Response->GetContentAsString()
-							                                  : TEXT("Invalid Response"));
-						OutDebugMessage = TempStr;
-						if (GEngine)
-						{
-							GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-						}
-						UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-						bRequestSuccessful = false;
-					}
-				});
-
-			// Execute the request
-			if (!Request->ProcessRequest())
-			{
-				OutDebugMessage = TEXT("Failed to process HTTP request");
-				UE_LOG(LogTemp, Error, TEXT("Failed to process HTTP request"));
-				return false;
-			}
-
-			return bRequestSuccessful;
-		}
-		else
-		{
-			FString TempStr = FString::Printf(TEXT("Failed to load JSON file"));
-			OutDebugMessage = TempStr;
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-			}
-			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-			return false;
-		}
-	}
-	else
-	{
-		OutDebugMessage = TEXT("SaveDataFileName is empty");
-		UE_LOG(LogTemp, Error, TEXT("SaveDataFileName is empty"));
-		return false;
-	}
-}
-
-void UMySaveGIS::OnHttpRequestCompleted(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
-{
-	if (bWasSuccessful && Response->GetResponseCode() == 200)
-	{
-		FString
-			TempStr = FString::Printf(TEXT("Success: %s"), *Response->GetContentAsString());
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-	}
-	else
-	{
-		FString
-			TempStr = FString::Printf(TEXT("HTTP Request failed: %s"), *Response->GetContentAsString());
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-	}
-}
-
-
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	LoadData(Global_AllDataToSave);
+	LoadData();
 	//todo
-	// FetchAndParseJSON(TEXT("https://raw.githubusercontent.com/2607044640/NewTestOfHostJson/refs/heads/main/ThisTest.json"));
+	// FetchAndParseJSON(TEXT(""));
 }
 
 
@@ -254,7 +101,7 @@ void UMySaveGIS::DelayToGenerateJson()
 {
 	if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
 	{
-		MyHUD->MainUI->TasksContainer->GenerateTasksFromGlobalData();
+		MyHUD->MainUI->TasksContainer->RegenerateTasksFromGlobalData();
 	}
 }
 
@@ -297,7 +144,8 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	OtherJsonObject->SetStringField(TEXT("URL"), Global_AllDataToSave.URL);
 	OtherJsonObject->SetStringField(TEXT("AuthorizationName"), Global_AllDataToSave.AuthorizationName);
 	OtherJsonObject->SetStringField(TEXT("AuthorizationValue"), Global_AllDataToSave.AuthorizationValue);
-	OtherJsonObject->SetStringField(TEXT("VerbOrMethod"), Global_AllDataToSave.VerbOrMethod);
+	OtherJsonObject->SetStringField(TEXT("VerbOrMethod_Save"), Global_AllDataToSave.VerbOrMethod_Save);
+	OtherJsonObject->SetStringField(TEXT("VerbOrMethod_Load"), Global_AllDataToSave.VerbOrMethod_Load);
 	OtherJsonObject->SetStringField(TEXT("ContentTypeName"), Global_AllDataToSave.ContentTypeName);
 	OtherJsonObject->SetStringField(TEXT("ContentTypeValue"), Global_AllDataToSave.ContentTypeValue);
 
@@ -418,6 +266,7 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 							}
 						}
 					}
+
 					FTimerHandle TempHandle;
 					GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UMySaveGIS::DelayToGenerateJson, 0.5f);
 				}
@@ -436,83 +285,99 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 }
 
 
-bool UMySaveGIS::LoadData(FAllDataToSave& AllDataToSave)
+bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETRequest)
+{
+	TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Result);
+	TSharedPtr<FJsonObject> JsonObject;
+
+	if (FJsonSerializer::Deserialize(JsonReader, JsonObject))
+	{
+		// For GET requests, we need to parse the "record" object first
+		if (IsGETRequest)
+		{
+			if (TSharedPtr<FJsonObject> RecordObject = JsonObject->GetObjectField(TEXT("record")))
+			{
+				JsonObject = RecordObject;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		// Load task data
+		const TArray<TSharedPtr<FJsonValue>>* JsonValues;
+		if (JsonObject->TryGetArrayField(TEXT("TaskData"), JsonValues))
+		{
+			// Clear existing task data before loading new ones
+			Global_AllDataToSave.TaskDatum.Empty();
+
+			for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
+			{
+				if (TSharedPtr<FJsonObject> TaskObject = JsonValue->AsObject())
+				{
+					FTaskData TaskData;
+					TaskData.SortName = TaskObject->GetStringField(TEXT("SortName"));
+					TaskData.Title = TaskObject->GetStringField(TEXT("Title"));
+					TaskData.Detail = TaskObject->GetStringField(TEXT("Detail"));
+					TaskData.Score = TaskObject->GetNumberField(TEXT("Score"));
+					TaskData.Days = TaskObject->GetNumberField(TEXT("Days"));
+					TaskData.SavedDays = TaskObject->GetNumberField(TEXT("SavedDays"));
+					TaskData.Times = TaskObject->GetNumberField(TEXT("Times"));
+					TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
+					TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
+
+					Global_AllDataToSave.TaskDatum.Add(TaskData);
+				}
+			}
+		}
+
+		if (JsonObject->TryGetArrayField(TEXT("OtherData"), JsonValues))
+		{
+			for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
+			{
+				if (TSharedPtr<FJsonObject> OtherObject = JsonValue->AsObject())
+				{
+					Global_AllDataToSave.GlobalTotalScore = OtherObject->GetNumberField(TEXT("GlobalTotalScore"));
+					Global_AllDataToSave.DailyProgressRewardValue = OtherObject->GetNumberField(
+						TEXT("DailyProgressRewardValue"));
+					Global_AllDataToSave.GlobalDailyProgress = OtherObject->GetNumberField(TEXT("GlobalDailyProgress"));
+					Global_AllDataToSave.GlobalDailyProgress_Saved = OtherObject->GetNumberField(
+						TEXT("GlobalDailyProgress_Saved"));
+
+					Global_AllDataToSave.URL = OtherObject->GetStringField(TEXT("URL"));
+					Global_AllDataToSave.AuthorizationName = OtherObject->GetStringField(TEXT("AuthorizationName"));
+					Global_AllDataToSave.AuthorizationValue = OtherObject->GetStringField(TEXT("AuthorizationValue"));
+					Global_AllDataToSave.VerbOrMethod_Save = OtherObject->GetStringField(TEXT("VerbOrMethod_Save"));
+					Global_AllDataToSave.VerbOrMethod_Load = OtherObject->GetStringField(TEXT("VerbOrMethod_Load"));
+					Global_AllDataToSave.ContentTypeName = OtherObject->GetStringField(TEXT("ContentTypeName"));
+					Global_AllDataToSave.ContentTypeValue = OtherObject->GetStringField(TEXT("ContentTypeValue"));
+
+					// AnotherDay calculation
+					int32 TempDayPrevious = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));
+					int32 TempDayNow = FDateTime::Now().GetDay();
+					if (TempDayPrevious != TempDayNow && TempDayNow - TempDayPrevious > 0)
+					{
+						AnotherDay = TempDayNow - TempDayPrevious;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool UMySaveGIS::LoadData()
 {
 	FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
 
 	FString Result;
 	if (FFileHelper::LoadFileToString(Result, *FilePath))
 	{
-		TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Result);
-		TSharedPtr<FJsonObject> JsonObject;
-
-		if (FJsonSerializer::Deserialize(JsonReader, JsonObject))
-		{
-			// Load task data
-			const TArray<TSharedPtr<FJsonValue>>* JsonValues;
-			if (JsonObject->TryGetArrayField(TEXT("TaskData"), JsonValues))
-			{
-				for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
-				{
-					if (TSharedPtr<FJsonObject> TaskObject = JsonValue->AsObject())
-					{
-						FTaskData TaskData;
-						TaskData.SortName = TaskObject->GetStringField(TEXT("SortName"));
-						TaskData.Title = TaskObject->GetStringField(TEXT("Title"));
-						TaskData.Detail = TaskObject->GetStringField(TEXT("Detail"));
-						TaskData.Score = TaskObject->GetNumberField(TEXT("Score"));
-						TaskData.Days = TaskObject->GetNumberField(TEXT("Days"));
-						TaskData.SavedDays = TaskObject->GetNumberField(TEXT("SavedDays"));
-						TaskData.Times = TaskObject->GetNumberField(TEXT("Times"));
-						TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
-
-						TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
-
-						AllDataToSave.TaskDatum.Add(TaskData);
-					}
-				}
-			}
-			if (JsonObject->TryGetArrayField(TEXT("OtherData"), JsonValues))
-			{
-				for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
-				{
-					if (TSharedPtr<FJsonObject> OtherObject = JsonValue->AsObject())
-					{
-						Global_AllDataToSave.GlobalTotalScore = OtherObject->GetNumberField(
-							TEXT("GlobalTotalScore"));
-						Global_AllDataToSave.DailyProgressRewardValue = OtherObject->GetNumberField(
-							TEXT("DailyProgressRewardValue"));
-						Global_AllDataToSave.GlobalDailyProgress = OtherObject->GetNumberField(
-							TEXT("GlobalDailyProgress"));
-						Global_AllDataToSave.GlobalDailyProgress_Saved = OtherObject->GetNumberField(
-							TEXT("GlobalDailyProgress_Saved"));
-
-						Global_AllDataToSave.URL = OtherObject->GetStringField(
-							TEXT("URL"));
-						Global_AllDataToSave.AuthorizationName = OtherObject->GetStringField(
-							TEXT("AuthorizationName"));
-						Global_AllDataToSave.AuthorizationValue = OtherObject->GetStringField(
-							TEXT("AuthorizationValue"));
-						Global_AllDataToSave.VerbOrMethod = OtherObject->GetStringField(
-							TEXT("VerbOrMethod"));
-						Global_AllDataToSave.ContentTypeName = OtherObject->GetStringField(
-							TEXT("ContentTypeName"));
-						Global_AllDataToSave.ContentTypeValue = OtherObject->GetStringField(
-							TEXT("ContentTypeValue"));
-
-						//AnotherDay calc
-						int32 TempDayPrevious = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));
-						int32 TempDayNow = FDateTime::Now().GetDay();
-						if (TempDayPrevious != TempDayNow && TempDayNow - TempDayPrevious > 0)
-						{
-							AnotherDay = TempDayNow - TempDayPrevious;
-						}
-					}
-				}
-			}
-
-			return true;
-		}
+		return AnalysisLoadedStringToAllDataToSave(Result);
 	}
 	return false;
 }

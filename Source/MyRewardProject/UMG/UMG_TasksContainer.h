@@ -29,7 +29,7 @@ UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
 	template <typename Func>
-	void ExecuteForAllChildrenWithConcepts(Func Function);
+	void ExecuteForAllChildrenWithLambda(Func Function);
 
 	// template <class TClass>
 	// void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
@@ -70,7 +70,7 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void GenerateTasksFromGlobalData();
+	void RegenerateTasksFromGlobalData();
 	OnMouseButtonEvent TaskContainerOnMouseButtonDown;
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPAddOption();

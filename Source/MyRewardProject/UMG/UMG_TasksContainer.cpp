@@ -156,7 +156,7 @@ void UUMG_TasksContainer::SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_
 
 
 template <typename Func>
-void UUMG_TasksContainer::ExecuteForAllChildrenWithConcepts(Func Function)
+void UUMG_TasksContainer::ExecuteForAllChildrenWithLambda(Func Function)
 {
 	for (UWidget* Child : ScrollBox_Tasks->GetAllChildren())
 	{
@@ -226,7 +226,7 @@ void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(
 			UMG_BasicTask->SetVisibility(ESlateVisibility::Visible);
 		}
 	};
-	ExecuteForAllChildrenWithConcepts(TaskFilter);
+	ExecuteForAllChildrenWithLambda(TaskFilter);
 
 	// ExecuteForAllChildrenWithStdFunction<UUMG_BasicTask>(TaskFilter);
 	// ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::SetVisibilityWhenSelectionChanged, SelectedItem);
@@ -404,10 +404,16 @@ void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
 	bIsChangeSortName_Task = true;
 }
 
-void UUMG_TasksContainer::GenerateTasksFromGlobalData()
+void UUMG_TasksContainer::RegenerateTasksFromGlobalData()
 {
-	//Init Stat
+	//Clear Stat
 	ClearThenGenerateOptions();
+	
+	ExecuteForAllChildrenWithLambda([&](UUMG_BasicTask* Child)
+	{
+		Child->RemoveFromParent();
+	});
+	
 	//Add tasks
 	for (FTaskData
 	     InTaskData : MySaveGIS->Global_AllDataToSave.TaskDatum)
@@ -447,7 +453,7 @@ void UUMG_TasksContainer::NativeConstruct()
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
 
 	//todo
-	GenerateTasksFromGlobalData();
+	RegenerateTasksFromGlobalData();
 }
 
 void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname)
