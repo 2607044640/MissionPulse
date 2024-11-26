@@ -16,8 +16,6 @@ void UUMG_Setting::NativeConstruct()
 {
 	MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
 	AddLambdaToEditer(BasicEditer_URL, URL)
-	AddLambdaToEditer(BasicEditer_VerbOrMethod_Save,VerbOrMethod_Save)
-	AddLambdaToEditer(BasicEditer_VerbOrMethod_Load,VerbOrMethod_Load)
 	AddLambdaToEditer(BasicEditer_AuthorizationName,AuthorizationName)
 	AddLambdaToEditer(BasicEditer_AuthorizationValue,AuthorizationValue)
 	AddLambdaToEditer(BasicEditer_ContentTypeName,ContentTypeName)

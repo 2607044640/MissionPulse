@@ -59,36 +59,34 @@ void USendHttpRequestWithAPI::Activate()
 	ExecuteUpload();
 }
 
-bool USendHttpRequestWithAPI::BindRequestAndBroadcast(TSharedRef<IHttpRequest, ESPMode::ThreadSafe> InRequest)
+bool USendHttpRequestWithAPI::BindRequestAndProcessBroadcast(TSharedRef<IHttpRequest, ESPMode::ThreadSafe> InRequest)
 {
-	InRequest->OnProcessRequestComplete().BindLambda([&](FHttpRequestPtr RequestTemp, FHttpResponsePtr Response, bool bWasSuccessful)
-	{
-		if (!RequestTemp.IsValid() || !Response.IsValid())
+	InRequest->OnProcessRequestComplete().BindLambda(
+		[&](FHttpRequestPtr RequestTemp, FHttpResponsePtr Response, bool bWasSuccessful)
 		{
-			OnFailure.Broadcast(false, TEXT("Invalid Request or Response"));
-			return;
-		}
+			if (!RequestTemp.IsValid() || !Response.IsValid())
+			{
+				OnFailure.Broadcast(false, TEXT("Invalid Request or Response"));
+				return;
+			}
 
-		if (bWasSuccessful && Response->GetResponseCode() == 200)
-		{
-			FString SuccessMessage = FString::Printf(
-				TEXT("%s%s"), VerbOrMethod.Equals(TEXT("PUT")) ? TEXT("Successfully saved : ") : TEXT(""),
-				*Response->GetContentAsString());
-			OnSuccess.Broadcast(true, SuccessMessage);
-
-				//todo interface connect to gis
-				// MyHUD->MainUI->TasksContainer->GenerateTasksFromGlobalData();
-		}
-		else
-		{
-			FString ErrorMessage = FString::Printf(TEXT("HTTP Request failed: %s"),
-												   Response.IsValid()
-													   ? *Response->GetContentAsString()
-													   : TEXT("Invalid Response"));
-			OnFailure.Broadcast(false, ErrorMessage);
-		}
-	});
-
+			if (bWasSuccessful && Response->GetResponseCode() == 200)
+			{
+				// We need to preserve the pure JSON string, so do not add anything to the field that corresponding to GET
+				FString SuccessMessage = FString::Printf(
+					TEXT("%s%s"), VerbOrMethod.Equals(TEXT("GET")) ? TEXT("") : TEXT("Successfully saved : "),
+					*Response->GetContentAsString());
+				OnSuccess.Broadcast(true, SuccessMessage);
+			}
+			else
+			{
+				FString ErrorMessage = FString::Printf(TEXT("HTTP Request failed: %s"),
+				                                       Response.IsValid()
+					                                       ? *Response->GetContentAsString()
+					                                       : TEXT("Invalid Response"));
+				OnFailure.Broadcast(false, ErrorMessage);
+			}
+		});
 
 
 	if (!InRequest->ProcessRequest())
@@ -135,7 +133,7 @@ void USendHttpRequestWithAPI::ExecuteUpload()
 
 	if (VerbOrMethod == TEXT("GET"))
 	{
-		if (BindRequestAndBroadcast(Request)) return;
+		if (BindRequestAndProcessBroadcast(Request)) return;
 	}
 	else
 	{
@@ -158,7 +156,7 @@ void USendHttpRequestWithAPI::ExecuteUpload()
 			{
 				Request->SetContentAsString(JsonContent);
 
-				if (BindRequestAndBroadcast(Request)) return;
+				if (BindRequestAndProcessBroadcast(Request)) return;
 			}
 			else
 			{

@@ -137,7 +137,7 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 
 	MySaveGIS->SaveAllData();
 	BasicTask->RefreshUI();
-	ClearThenGenerateOptions();
+	ClearThenGenerateSortedOptions();
 	ComboBoxString_TasksClassification->SetSelectedOption(BasicTask->TaskData.SortName);
 }
 
@@ -276,7 +276,7 @@ void UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_
 	MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue = FCString::Atoi(*Text.ToString());
 }
 
-void UUMG_TasksContainer::ClearThenGenerateOptions()
+void UUMG_TasksContainer::ClearThenGenerateSortedOptions()
 {
 	ComboBoxString_TasksClassification->ClearOptions();
 
@@ -350,7 +350,7 @@ void UUMG_TasksContainer::ChangeOption()
 	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::ChangeChildrenSortname,
 	                          EditableTextBox_SortName->GetText());
 	MySaveGIS->SaveAllData();
-	ClearThenGenerateOptions();
+	ClearThenGenerateSortedOptions();
 	ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
 	EditableTextBox_SortName->SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -403,11 +403,20 @@ void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
 	ComboBoxString_TasksClassification->MyComboBox->SetIsOpen(true);
 	bIsChangeSortName_Task = true;
 }
-
+void UUMG_TasksContainer::RemoveChildrenThatVisible()
+{
+	ExecuteForAllChildrenWithLambda([&](UUMG_BasicTask* Child)
+	{
+		if (Child->IsVisible())
+		{
+			Child->RemoveFromParent();
+		}
+	});
+}
 void UUMG_TasksContainer::RegenerateTasksFromGlobalData()
 {
 	//Clear Stat
-	ClearThenGenerateOptions();
+	ClearThenGenerateSortedOptions();
 	
 	ExecuteForAllChildrenWithLambda([&](UUMG_BasicTask* Child)
 	{

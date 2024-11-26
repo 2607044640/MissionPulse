@@ -47,7 +47,7 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	UFUNCTION(BlueprintCallable)
-	void ClearThenGenerateOptions();
+	void ClearThenGenerateSortedOptions();
 
 	template <class TClass, class TMemberFunc, class... TArgs>
 	void ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args);
@@ -69,6 +69,8 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	FString TempStringRecorderForSelection;
 
 public:
+	UFUNCTION(BlueprintCallable)
+	void RemoveChildrenThatVisible();
 	UFUNCTION(BlueprintCallable)
 	void RegenerateTasksFromGlobalData();
 	OnMouseButtonEvent TaskContainerOnMouseButtonDown;

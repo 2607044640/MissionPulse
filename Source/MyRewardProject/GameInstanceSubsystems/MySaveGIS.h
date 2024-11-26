@@ -98,11 +98,7 @@ public:
 	FString AuthorizationName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString AuthorizationValue;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	FString VerbOrMethod_Save = TEXT("PUT");
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	FString VerbOrMethod_Load = TEXT("GET");
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString ContentTypeName = TEXT("Content-Type");
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)

@@ -144,8 +144,6 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	OtherJsonObject->SetStringField(TEXT("URL"), Global_AllDataToSave.URL);
 	OtherJsonObject->SetStringField(TEXT("AuthorizationName"), Global_AllDataToSave.AuthorizationName);
 	OtherJsonObject->SetStringField(TEXT("AuthorizationValue"), Global_AllDataToSave.AuthorizationValue);
-	OtherJsonObject->SetStringField(TEXT("VerbOrMethod_Save"), Global_AllDataToSave.VerbOrMethod_Save);
-	OtherJsonObject->SetStringField(TEXT("VerbOrMethod_Load"), Global_AllDataToSave.VerbOrMethod_Load);
 	OtherJsonObject->SetStringField(TEXT("ContentTypeName"), Global_AllDataToSave.ContentTypeName);
 	OtherJsonObject->SetStringField(TEXT("ContentTypeValue"), Global_AllDataToSave.ContentTypeValue);
 
@@ -348,8 +346,6 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 					Global_AllDataToSave.URL = OtherObject->GetStringField(TEXT("URL"));
 					Global_AllDataToSave.AuthorizationName = OtherObject->GetStringField(TEXT("AuthorizationName"));
 					Global_AllDataToSave.AuthorizationValue = OtherObject->GetStringField(TEXT("AuthorizationValue"));
-					Global_AllDataToSave.VerbOrMethod_Save = OtherObject->GetStringField(TEXT("VerbOrMethod_Save"));
-					Global_AllDataToSave.VerbOrMethod_Load = OtherObject->GetStringField(TEXT("VerbOrMethod_Load"));
 					Global_AllDataToSave.ContentTypeName = OtherObject->GetStringField(TEXT("ContentTypeName"));
 					Global_AllDataToSave.ContentTypeValue = OtherObject->GetStringField(TEXT("ContentTypeValue"));
 

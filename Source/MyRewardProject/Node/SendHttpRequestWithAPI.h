@@ -14,7 +14,7 @@ UCLASS(BlueprintType, meta=(ExposedAsyncProxy=AsyncUObjectInstance))
 class MYREWARDPROJECT_API USendHttpRequestWithAPI : public UBlueprintAsyncActionBase
 {
 
-	bool BindRequestAndBroadcast(TSharedRef<IHttpRequest, ESPMode::ThreadSafe> InRequest);
+	bool BindRequestAndProcessBroadcast(TSharedRef<IHttpRequest, ESPMode::ThreadSafe> InRequest);
 
 public:
 	
