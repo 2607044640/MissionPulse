@@ -43,6 +43,8 @@ public:
 	UPROPERTY()
 	UUMG_TasksContainer* TaskContainer;
 
+	
+
 	//In other file, We should AddUObject to OnEditFinishedCommitted instead of AddDynamic to OnCommitted of EditableTextBox_Basic  
 	OnTaskEditedChanged OnEditFinishedCommitted;
 

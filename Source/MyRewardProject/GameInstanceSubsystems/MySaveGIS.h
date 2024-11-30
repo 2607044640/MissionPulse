@@ -9,6 +9,7 @@
 
 class UScrollBox;
 
+
 USTRUCT(BlueprintType)
 
 struct FTaskData
@@ -21,8 +22,7 @@ struct FTaskData
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	FString Detail;
 
-	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
-	float Score;
+	
 
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	int32 Days; // == 0 -> IsOnce
@@ -34,6 +34,9 @@ struct FTaskData
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	int32 SavedTimes; // == 0 -> IsFinish
 
+	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
+	float Score;
+	
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	bool bIsAddScore;
 

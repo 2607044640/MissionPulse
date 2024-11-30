@@ -12,6 +12,8 @@
 UCLASS()
 class MYREWARDPROJECT_API UMyGameInstance : public UGameInstance
 {
+
+	void Test(const FFocusEvent& FocusEvent, const FWeakWidgetPath& WeakWidgetPath, const TSharedPtr<SWidget>& Widget, const FWidgetPath& WidgetPath, const TSharedPtr<SWidget>& Shared);
 	virtual void Init() override;
 	virtual void Shutdown() override;
 	GENERATED_BODY()
