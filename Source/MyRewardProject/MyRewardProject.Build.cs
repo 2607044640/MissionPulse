@@ -13,7 +13,7 @@ public class MyRewardProject : ModuleRules
 			"Core", "CoreUObject", "Engine", "InputCore", "UMG", "SlateCore", "Slate", "Json", "JsonUtilities","UMG_Utilities","HTTP"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "UMG_Utilities", "ImageDownload", "AMFCodecs" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG_Utilities", "ImageDownload" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
