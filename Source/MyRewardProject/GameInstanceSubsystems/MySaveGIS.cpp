@@ -20,8 +20,6 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	LoadData();
-	//todo
-	// FetchAndParseJSON(TEXT(""));
 }
 
 
