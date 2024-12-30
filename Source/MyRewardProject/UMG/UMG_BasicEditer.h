@@ -39,7 +39,7 @@ public:
 	UPROPERTY(meta=(BindWidget), BlueprintReadWrite)
 	UWidgetSwitcher* WidgetSwitcher;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	UUMG_BasicTask* BasicTask;
+	UUMG_BasicTask* Parent_BasicTask;
 	UPROPERTY()
 	UUMG_TasksContainer* TaskContainer;
 

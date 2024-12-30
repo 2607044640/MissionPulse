@@ -26,6 +26,9 @@ UCLASS()
 class MYREWARDPROJECT_API UUMG_BasicTask : public UUserWidget
 {
 public:
+	UFUNCTION(BlueprintImplementableEvent)
+	void BPTaskOnUnSelectedHideTimesAndDaysUMG();
+
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FTaskData TaskData;

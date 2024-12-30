@@ -11,6 +11,7 @@
 #include "Components/Border.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
+#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -127,7 +128,7 @@ void UUMG_BasicTask::Button_FinishOnPressed()
 void UUMG_BasicTask::ButtonAddScoreOnClicked()
 {
 	int32 TempINT32 = FCString::Atoi(*SlotScore->TextBlock->GetText().ToString());
-	TempINT32++;
+	TempINT32 += 10;
 	if (TempINT32 < 0)
 	{
 		TempINT32 = 0;
@@ -140,7 +141,7 @@ void UUMG_BasicTask::ButtonAddScoreOnClicked()
 void UUMG_BasicTask::ButtonMinusScoreOnClicked()
 {
 	int32 TempINT32 = FCString::Atoi(*SlotScore->TextBlock->GetText().ToString());
-	TempINT32--;
+	TempINT32 -= 10;
 	if (TempINT32 < 0)
 	{
 		TempINT32 = 0;
@@ -152,11 +153,9 @@ void UUMG_BasicTask::ButtonMinusScoreOnClicked()
 
 void UUMG_BasicTask::ButtonSelectOnClick()
 {
-	
 	if (umg_ParentTasksContainer->SelectedBasicTask == this)
 	{
 		umg_ParentTasksContainer->RemoveAllSelectedBasicTask();
-		umg_ParentTasksContainer->SelectedBasicTask = nullptr;
 		return;
 	}
 
@@ -276,7 +275,11 @@ void UUMG_BasicTask::TaskOnSelected()
 
 void UUMG_BasicTask::TaskOnUnSelected()
 {
-	Border_UserVisualColor->SetBrushColor(PreviousColor);
+	if (this == umg_ParentTasksContainer->SelectedBasicTask)
+	{
+		Border_UserVisualColor->SetBrushColor(PreviousColor);
+		BPTaskOnUnSelectedHideTimesAndDaysUMG();
+	}
 }
 
 // UUMG_BasicTask* UUMG_BasicTask::CopySelf()

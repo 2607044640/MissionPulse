@@ -36,7 +36,7 @@ void UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted(const FText& Text, E
 {
 	if (OnEditFinishedCommitted.IsBound())
 	{
-		OnEditFinishedCommitted.Broadcast(BasicTask, EditableTextBox_Basic->GetText());
+		OnEditFinishedCommitted.Broadcast(Parent_BasicTask, EditableTextBox_Basic->GetText());
 		TextBlock->SetText(EditableTextBox_Basic->GetText());
 	}
 	else
@@ -61,7 +61,7 @@ void UUMG_BasicEditer::TaskContainerOnMouseButtonDownFunc()
 	if (OnEditFinishedCommitted.IsBound())
 	{
 		if (WidgetSwitcher->GetActiveWidget() == Button)return;
-		OnEditFinishedCommitted.Broadcast(BasicTask, EditableTextBox_Basic->GetText());
+		OnEditFinishedCommitted.Broadcast(Parent_BasicTask, EditableTextBox_Basic->GetText());
 		TextBlock->SetText(EditableTextBox_Basic->GetText());
 	}
 	else
@@ -105,6 +105,6 @@ void UUMG_BasicEditer::NativeConstruct()
 	//get data from parent
 	if (UUMG_BasicTask* OwningWidget = GetParent()->GetTypedOuter<UUMG_BasicTask>())
 	{
-		BasicTask = OwningWidget;
+		Parent_BasicTask = OwningWidget;
 	}
 }

@@ -42,7 +42,7 @@ struct FTaskData
 
 	FTaskData()
 	{
-		Score = 1;
+		Score = 10;
 		Days = 0;
 		SavedDays = 0;
 		Times = 1;
@@ -112,12 +112,17 @@ public:
 /**
  * 
  */
+
+
+
 UCLASS()
 class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 {
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 public:
+
+	
 	void AddChildrenToBasicDatum(UScrollBox* InScrollBox);
 
 	UFUNCTION(BlueprintCallable)
