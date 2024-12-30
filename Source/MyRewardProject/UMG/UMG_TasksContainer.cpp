@@ -51,6 +51,8 @@ FReply UUMG_TasksContainer::NativeOnMouseButtonDown(const FGeometry& InGeometry,
 	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 }
 
+
+//todo 平移一格就是length/task count
 void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 {
 	if (!InBasicTask)
@@ -133,7 +135,10 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	}
 
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
-	BasicTask->TaskData.bIsAddScore= true;
+	BasicTask->TaskData.bIsAddScore = true;
+
+	BasicTask->TaskData.Score = 10;
+
 
 	MySaveGIS->SaveAllData();
 	BasicTask->RefreshUI();
@@ -196,7 +201,7 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<voi
 }
 
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
-                                                                                ESelectInfo::Type SelectionType)
+	ESelectInfo::Type SelectionType)
 {
 	if (bIsChangeSortName_Task && SelectedBasicTask)
 	{
@@ -403,6 +408,7 @@ void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
 	ComboBoxString_TasksClassification->MyComboBox->SetIsOpen(true);
 	bIsChangeSortName_Task = true;
 }
+
 void UUMG_TasksContainer::RemoveChildrenThatVisible()
 {
 	ExecuteForAllChildrenWithLambda([&](UUMG_BasicTask* Child)
@@ -413,16 +419,17 @@ void UUMG_TasksContainer::RemoveChildrenThatVisible()
 		}
 	});
 }
+
 void UUMG_TasksContainer::RegenerateTasksFromGlobalData()
 {
 	//Clear Stat
 	ClearThenGenerateSortedOptions();
-	
+
 	ExecuteForAllChildrenWithLambda([&](UUMG_BasicTask* Child)
 	{
 		Child->RemoveFromParent();
 	});
-	
+
 	//Add tasks
 	for (FTaskData
 	     InTaskData : MySaveGIS->Global_AllDataToSave.TaskDatum)
@@ -430,7 +437,6 @@ void UUMG_TasksContainer::RegenerateTasksFromGlobalData()
 		TaskDataTransformToTask(InTaskData);
 	}
 	//Init Global UI Value
-	//todo trans it to main refresh.
 	TextBlock_Score->SetText(
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalTotalScore));
 	TextBlock_GlobalDailyProgress_Saved->SetText(
@@ -439,7 +445,7 @@ void UUMG_TasksContainer::RegenerateTasksFromGlobalData()
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.GlobalDailyProgress));
 	BasicEditer_DailyProgressRewardValue->TextBlock->SetText(
 		UBFL_FunctionUtilities::JFFloatToText(MySaveGIS->Global_AllDataToSave.DailyProgressRewardValue));
-	
+
 	// MySaveGIS->SaveAllData();
 }
 
@@ -460,8 +466,7 @@ void UUMG_TasksContainer::NativeConstruct()
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
 		this, &ThisClass::ComboBoxString_TasksClassification_OnSelectionChanged);
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
-
-	//todo
+	
 	RegenerateTasksFromGlobalData();
 }
 
