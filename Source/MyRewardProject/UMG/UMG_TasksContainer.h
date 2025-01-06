@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include <functional>
 
+#include <functional>
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/EditableTextBox.h"
@@ -61,7 +61,7 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	UFUNCTION()
 	void Button_ChangeSortNamesOnClicked();
 	UFUNCTION()
-	void ButtonChangeSortName_TaskOnClick();
+	void ButtonChangeSortName_TaskOnClick1();
 	virtual void NativeConstruct() override;
 	bool bIsChangeSortName_Task;
 	UPROPERTY()
@@ -81,8 +81,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnDailyProgressEditFinish();
+	
 	UFUNCTION(BlueprintCallable)
-
 	UPanelSlot* MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox);
 
 	int32 CalcAndGetIndex(FVector2D MousePosition, UPanelWidget* InPanelWidget);

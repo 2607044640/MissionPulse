@@ -2,7 +2,6 @@
 
 
 #include "UMG_TasksContainer.h"
-
 #include "BFL_FunctionUtilities.h"
 #include "UMG_BasicEditer.h"
 #include "UMG_BasicTask.h"
@@ -283,9 +282,18 @@ void UUMG_TasksContainer::BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_
 
 void UUMG_TasksContainer::ClearThenGenerateSortedOptions()
 {
-	ComboBoxString_TasksClassification->ClearOptions();
+	// Get Selected Option to Switch back the option later
+	FString TempOption;
+	if (ComboBoxString_TasksClassification->GetSelectedOption().Compare(""))
+	{
+		TempOption = ComboBoxString_TasksClassification->GetSelectedOption();
+	}
+
 
 	//ComboBoxString_TasksClassification
+	ComboBoxString_TasksClassification->ClearOptions();
+
+
 	TArray<FString> Temp_SortNames;
 	Temp_SortNames.Add(InitialName_AllTasks);
 	ComboBoxString_TasksClassification->AddOption(InitialName_AllTasks);
@@ -311,6 +319,12 @@ void UUMG_TasksContainer::ClearThenGenerateSortedOptions()
 			Temp_SortNames.Add(InTaskData.SortName);
 			ComboBoxString_TasksClassification->AddOption(InTaskData.SortName);
 		}
+	}
+
+	// Get Selected Option to Switch back the option we want
+	if (TempOption.Compare(""))
+	{
+		ComboBoxString_TasksClassification->SetSelectedOption(TempOption);
 	}
 }
 
@@ -403,9 +417,19 @@ void UUMG_TasksContainer::Button_ChangeSortNamesOnClicked()
 	}
 }
 
-void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick()
+void UUMG_TasksContainer::ButtonChangeSortName_TaskOnClick1()
 {
-	ComboBoxString_TasksClassification->MyComboBox->SetIsOpen(true);
+	if (!ComboBoxString_TasksClassification || !SelectedBasicTask)
+	{
+		return;
+	}
+
+	if (TSharedPtr<SComboBox<TSharedPtr<FString>>> ComboBox = StaticCastSharedPtr<SComboBox<TSharedPtr<FString>>>(
+		ComboBoxString_TasksClassification->GetCachedWidget()))
+	{
+		ComboBox->SetIsOpen(true);
+	}
+
 	bIsChangeSortName_Task = true;
 }
 
@@ -454,7 +478,7 @@ void UUMG_TasksContainer::NativeConstruct()
 	Super::NativeConstruct();
 
 	//Binds
-	ButtonChangeSortName_Task->OnClicked.AddDynamic(this, &ThisClass::ButtonChangeSortName_TaskOnClick);
+	ButtonChangeSortName_Task->OnClicked.AddDynamic(this, &ThisClass::ButtonChangeSortName_TaskOnClick1);
 	Button_AddSortName->OnClicked.AddDynamic(this, &ThisClass::Button_AddSortNameOnClicked);
 	Button_ChangeSortNames->OnPressed.AddDynamic(this, &ThisClass::Button_ChangeSortNamesOnClicked);
 	EditableTextBox_SortName->OnTextCommitted.AddDynamic(
@@ -466,7 +490,7 @@ void UUMG_TasksContainer::NativeConstruct()
 	ComboBoxString_TasksClassification->OnSelectionChanged.AddDynamic(
 		this, &ThisClass::ComboBoxString_TasksClassification_OnSelectionChanged);
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
-	
+
 	RegenerateTasksFromGlobalData();
 }
 
