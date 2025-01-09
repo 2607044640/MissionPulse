@@ -11,9 +11,8 @@
 #include "Components/Border.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
-#include "Components/ScrollBox.h"
-#include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/TextBlock.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "MyRewardProject/Frameworks/MyHUD.h"
 

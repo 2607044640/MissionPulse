@@ -3,15 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interfaces/IHttpRequest.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "GenericPlatform/GenericPlatformProcess.h"
 #include "MySaveGIS.generated.h"
 
 class UScrollBox;
 
 
 USTRUCT(BlueprintType)
-
 struct FTaskData
 {
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
@@ -22,7 +21,6 @@ struct FTaskData
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	FString Detail;
 
-	
 
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	int32 Days; // == 0 -> IsOnce
@@ -36,7 +34,7 @@ struct FTaskData
 
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	float Score;
-	
+
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	bool bIsAddScore;
 
@@ -78,7 +76,23 @@ struct FRewardPerDays //todo 模仿原神或者皇室的那个奖励令牌系统
 
 
 USTRUCT(BlueprintType)
+struct FDevice
+{
+	GENERATED_BODY()
 
+	FString DeviceID;
+	int64 DeviceDateTime;
+
+	FDevice() = default;
+
+	FDevice(const FString& InDeviceID, int64 DeviceDateTime)
+		: DeviceID(InDeviceID),
+		  DeviceDateTime(DeviceDateTime)
+	{
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FAllDataToSave
 {
 public:
@@ -101,11 +115,15 @@ public:
 	FString AuthorizationName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString AuthorizationValue;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString ContentTypeName = TEXT("Content-Type");
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString ContentTypeValue = TEXT("application/json");
+
+	UPROPERTY()
+	TArray<FDevice> Devices;
+
 	GENERATED_BODY()
 };
 
@@ -114,15 +132,15 @@ public:
  */
 
 
-
 UCLASS()
 class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 {
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 public:
-
 	
+	FDevice& FindDeviceOrAddNewDevice(TArray<FDevice>& InDevices, const FString& DeviceID);
+
 	void AddChildrenToBasicDatum(UScrollBox* InScrollBox);
 
 	UFUNCTION(BlueprintCallable)
@@ -139,7 +157,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
 
-	void DelayToGenerateJson();
+	void DelayToInitializeTasksFromGlobalData();
 
 	FAllDataToSave Global_AllDataToSave;
 
@@ -156,6 +174,13 @@ public:
 	bool AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETRequest = false);
 	UFUNCTION(BlueprintCallable, Category = "LoadData")
 	bool LoadData();
+
+private:
+	// 生成或获取设备ID
+	FString GenerateDeviceId();
+
+	// 获取系统盘序列号
+	FString GetSystemDriveSerialNumber();
 
 	GENERATED_BODY()
 };

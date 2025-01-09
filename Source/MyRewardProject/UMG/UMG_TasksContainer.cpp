@@ -16,6 +16,7 @@
 #include "Kismet/KismetArrayLibrary.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
+#include "Components/EditableTextBox.h"
 
 
 void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
@@ -178,8 +179,8 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithLambda(Func Function)
 	}
 }
 
+/*
 #include <functional>
-
 template <class TClass>
 void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func)
 {
@@ -198,7 +199,7 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<voi
 		}
 	}
 }
-
+*/
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
 	ESelectInfo::Type SelectionType)
 {

@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "UMG_BasicTask.h"
-#include "Blueprint/UserWidget.h"
-#include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "UMG_Setting.generated.h"
 
 class UUMG_BasicEditer;

@@ -14,6 +14,9 @@
 #include "MyRewardProject/UMG/UMG_MainUI.h"
 #include "MyRewardProject/UMG/UMG_TasksContainer.h"
 #include "Interfaces/IHttpRequest.h"
+#include "Microsoft/AllowMicrosoftPlatformTypes.h"
+#include <Windows.h>
+#include "Microsoft/HideMicrosoftPlatformTypes.h"
 #include "Misc/ScopeLock.h"
 
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
@@ -25,25 +28,132 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 
 void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
 {
-	if (!InScrollBox->GetAllChildren().IsValidIndex(0))
+	if (!InScrollBox || !InScrollBox->GetAllChildren().IsValidIndex(0))
 	{
 		return;
 	}
-	for (UWidget*
-	     Child : InScrollBox->GetAllChildren())
+
+	for (UWidget* Child : InScrollBox->GetAllChildren())
 	{
-		UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child);
-		Global_AllDataToSave.TaskDatum.Add(UMG_BasicTask->TaskData);
+		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
+		{
+			// 使用 EmplaceAt_GetRef 直接构造新的 TaskData
+			Global_AllDataToSave.TaskDatum.EmplaceAt(
+				Global_AllDataToSave.TaskDatum.Num(),
+				UMG_BasicTask->TaskData
+			);
+		}
 	}
+}
+
+//todo need to change InDevice.DeviceDateTime to current time when save the data
+FDevice& UMySaveGIS::FindDeviceOrAddNewDevice(TArray<FDevice>& InDevices, const FString& DeviceID)
+{
+	for (FDevice& InDevice : InDevices)
+	{
+		if (!InDevice.DeviceID.Compare(DeviceID))
+		{
+			return InDevice;
+		}
+	}
+	return InDevices.EmplaceAt_GetRef(InDevices.Num(), DeviceID, FDateTime::Now().GetTicks());
+}
+
+FString UMySaveGIS::GetSystemDriveSerialNumber()
+{
+	FString SerialNumber;
+
+	TCHAR WindowsPath[MAX_PATH];
+	GetWindowsDirectory(WindowsPath, MAX_PATH);
+	FString DriveLetter = FString(WindowsPath).Left(2); // Get "C:"(Default Value)
+	DriveLetter += TEXT("\\");
+
+	TCHAR VolumeNameBuffer[MAX_PATH];
+	DWORD VolumeSerialNumber;
+	DWORD MaxComponentLength;
+	DWORD FileSystemFlags;
+	TCHAR FileSystemNameBuffer[MAX_PATH];
+
+	// Get device information
+	if (GetVolumeInformation(
+		*DriveLetter, // 必须以 "C:\\" 格式结尾
+		VolumeNameBuffer,
+		MAX_PATH,
+		&VolumeSerialNumber,
+		&MaxComponentLength,
+		&FileSystemFlags,
+		FileSystemNameBuffer,
+		MAX_PATH))
+	{
+		SerialNumber = FString::Printf(TEXT("%08X"), VolumeSerialNumber);
+
+		/*
+		// Add log
+		{
+			FString TempStr = FString::Printf(TEXT("Successfully got drive serial: %s"), *SerialNumber);
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TempStr, true, FVector2D(3, 3));
+			}
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *TempStr);
+		}
+		*/
+		return SerialNumber;
+	}
+	/*
+	//Add error log
+	DWORD Error = GetLastError();
+	FString ErrorMsg = FString::Printf(TEXT("Failed to get drive info. Error code: %d"), Error);
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, ErrorMsg, true, FVector2D(3, 3));
+	}
+	UE_LOG(LogTemp, Error, TEXT("%s"), *ErrorMsg);
+	*/
+	return TEXT("");
+}
+
+FString UMySaveGIS::GenerateDeviceId()
+{
+	FString DeviceId;
+	DeviceId = UKismetSystemLibrary::GetDeviceId();
+
+	if (DeviceId.IsEmpty())
+	{
+		DeviceId = GetSystemDriveSerialNumber();
+	}
+	else if (DeviceId.IsEmpty())
+	{
+		FString ComputerName = FPlatformProcess::ComputerName();
+		FString Windows = TEXT("Windows");
+		/*
+				{
+					FString TempStr = FString::Printf(TEXT("%s"), *(Windows + ComputerName + Windows));
+					if (GEngine)
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+					}
+					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+				}
+		*/
+		DeviceId = FMD5::HashAnsiString(*(Windows + ComputerName + Windows));
+	}
+	return DeviceId;
 }
 
 void UMySaveGIS::SaveAllData()
 {
+	// Add Device
+	FDevice& Device = FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
+	Device.DeviceDateTime = FDateTime::Now().GetTicks();
+	
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
 	Global_AllDataToSave.TaskDatum.Empty();
 	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks);
 	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks_Finish);
+
+	//Parse,Serialize
 	SaveData(Global_AllDataToSave);
 }
 
@@ -95,7 +205,7 @@ float UMySaveGIS::GetDailyProgressRewardValue()
 }
 
 
-void UMySaveGIS::DelayToGenerateJson()
+void UMySaveGIS::DelayToInitializeTasksFromGlobalData()
 {
 	if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
 	{
@@ -128,11 +238,24 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	}
 	MainJsonObject->SetArrayField(TEXT("TaskData"), TaskDatumJsonValues);
 
+	/////////////////////
+
+	TArray<TSharedPtr<FJsonValue>> DevicesArray;
+	for (const FDevice& Device : Global_AllDataToSave.Devices)
+	{
+		TSharedPtr<FJsonObject> DeviceObj = MakeShareable(new FJsonObject);
+		DeviceObj->SetStringField(TEXT("DeviceID"), Device.DeviceID);
+		DeviceObj->SetStringField(TEXT("DeviceDateTime"), FString::Printf(TEXT("%lld"), Device.DeviceDateTime));
+		DevicesArray.Add(MakeShareable(new FJsonValueObject(DeviceObj)));
+	}
+	MainJsonObject->SetArrayField(TEXT("Devices"), DevicesArray);
+
 	//OtherData
 	TArray<TSharedPtr<FJsonValue>> OtherJsonValues;
 	TSharedPtr<FJsonObject> OtherJsonObject(new FJsonObject);
 
-	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), FDateTime::Now().GetDay());
+	OtherJsonObject->SetNumberField(
+		TEXT("GlobalDayToRecord"), FDateTime::Now().GetDate().GetTicks() / ETimespan::TicksPerDay);
 	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress_Saved"), Global_AllDataToSave.GlobalDailyProgress_Saved);
@@ -264,7 +387,8 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 					}
 
 					FTimerHandle TempHandle;
-					GetWorld()->GetTimerManager().SetTimer(TempHandle, this, &UMySaveGIS::DelayToGenerateJson, 0.5f);
+					GetWorld()->GetTimerManager().SetTimer(TempHandle, this,
+					                                       &UMySaveGIS::DelayToInitializeTasksFromGlobalData, 0.5f);
 				}
 				else
 				{
@@ -328,6 +452,24 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 			}
 		}
 
+
+		// Deserialize Devices 
+		const TArray<TSharedPtr<FJsonValue>>* DevicesArray;
+		if (JsonObject->TryGetArrayField(TEXT("Devices"), DevicesArray))
+		{
+			Global_AllDataToSave.Devices.Empty();
+			for (const TSharedPtr<FJsonValue>& Value : *DevicesArray)
+			{
+				if (TSharedPtr<FJsonObject> DeviceObj = Value->AsObject())
+				{
+					FDevice Device;
+					Device.DeviceID = DeviceObj->GetStringField(TEXT("DeviceID"));
+					Device.DeviceDateTime = FCString::Atoi64(*DeviceObj->GetStringField(TEXT("DeviceDateTime")));
+					Global_AllDataToSave.Devices.Add(Device);
+				}
+			}
+		}
+
 		if (JsonObject->TryGetArrayField(TEXT("OtherData"), JsonValues))
 		{
 			for (const TSharedPtr<FJsonValue>& JsonValue : *JsonValues)
@@ -349,7 +491,8 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 
 					// AnotherDay calculation
 					int32 TempDayPrevious = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));
-					int32 TempDayNow = FDateTime::Now().GetDay();
+					int64 TempDayNow = FDateTime::Now().GetDate().GetTicks() / ETimespan::TicksPerDay;
+
 					if (TempDayPrevious != TempDayNow && TempDayNow - TempDayPrevious > 0)
 					{
 						AnotherDay = TempDayNow - TempDayPrevious;

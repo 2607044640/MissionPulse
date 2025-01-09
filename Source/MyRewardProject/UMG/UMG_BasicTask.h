@@ -16,6 +16,7 @@ class UUMG_BasicTask;
 class UMySaveGIS;
 struct FTaskData;
 class UButton;
+class MySaveGIS;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBasicTaskSelect);
 DECLARE_MULTICAST_DELEGATE_OneParam(TaskStateChanged, UUMG_BasicTask* BasicTask)

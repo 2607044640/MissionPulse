@@ -3,10 +3,9 @@
 #pragma once
 
 
-#include <functional>
+//#include <functional>
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/EditableTextBox.h"
 #include "UMG_TasksContainer.generated.h"
 
 struct FTaskData;
@@ -18,6 +17,7 @@ class UScrollBox;
 class UUMG_BasicTask;
 class UButton;
 class UTextBlock;
+class UEditableTextBox;
 /**
  * 
  */
@@ -33,8 +33,8 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 
 	// template <class TClass>
 	// void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
-	template <class TClass>
-	void ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func);
+	/*template <class TClass>
+	void ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func);*/
 	UFUNCTION(BlueprintCallable)
 	void ButtonAddTaskOnClick();
 	
