@@ -56,7 +56,7 @@ FDevice& UMySaveGIS::FindDeviceOrAddNewDevice(TArray<FDevice>& InDevices, const 
 			return InDevice;
 		}
 	}
-	return InDevices.EmplaceAt_GetRef(InDevices.Num(), DeviceID, FDateTime::Now().GetTicks());
+	return InDevices.EmplaceAt_GetRef(InDevices.Num(), DeviceID, 0);
 }
 
 FString UMySaveGIS::GetSystemDriveSerialNumber()
@@ -141,12 +141,9 @@ FString UMySaveGIS::GenerateDeviceId()
 	return DeviceId;
 }
 
+
 void UMySaveGIS::SaveAllData()
 {
-	// Add Device
-	FDevice& Device = FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
-	Device.DeviceDateTime = FDateTime::Now().GetTicks();
-	
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
 	Global_AllDataToSave.TaskDatum.Empty();
@@ -234,11 +231,13 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 
 		TaskObject->SetBoolField(TEXT("bIsAddScore"), TaskData.bIsAddScore);
 
+		TaskObject->SetStringField(TEXT("SpawnTime"), FString::Printf(TEXT("%lld"), TaskData.SpawnTime));
+
 		TaskDatumJsonValues.Add(MakeShareable(new FJsonValueObject(TaskObject)));
 	}
 	MainJsonObject->SetArrayField(TEXT("TaskData"), TaskDatumJsonValues);
 
-	/////////////////////
+	//Devices
 
 	TArray<TSharedPtr<FJsonValue>> DevicesArray;
 	for (const FDevice& Device : Global_AllDataToSave.Devices)
@@ -255,7 +254,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	TSharedPtr<FJsonObject> OtherJsonObject(new FJsonObject);
 
 	OtherJsonObject->SetNumberField(
-		TEXT("GlobalDayToRecord"), FDateTime::Now().GetDate().GetTicks() / ETimespan::TicksPerDay);
+		TEXT("GlobalDayToRecord"), GetDateTimeTodayTicks() / ETimespan::TicksPerDay);
 	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
 	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress_Saved"), Global_AllDataToSave.GlobalDailyProgress_Saved);
@@ -447,6 +446,8 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 					TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
 					TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
 
+					TaskData.SpawnTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("SpawnTime")));
+
 					Global_AllDataToSave.TaskDatum.Add(TaskData);
 				}
 			}
@@ -491,7 +492,7 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 
 					// AnotherDay calculation
 					int32 TempDayPrevious = OtherObject->GetNumberField(TEXT("GlobalDayToRecord"));
-					int64 TempDayNow = FDateTime::Now().GetDate().GetTicks() / ETimespan::TicksPerDay;
+					int64 TempDayNow = GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
 
 					if (TempDayPrevious != TempDayNow && TempDayNow - TempDayPrevious > 0)
 					{
@@ -510,13 +511,26 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 bool UMySaveGIS::LoadData()
 {
 	FString FilePath = FPaths::ProjectDir() + TEXT("Saved/MySavedFolder/") + SaveDataFileName;
-
 	FString Result;
 	if (FFileHelper::LoadFileToString(Result, *FilePath))
 	{
 		return AnalysisLoadedStringToAllDataToSave(Result);
 	}
 	return false;
+}
+
+void UMySaveGIS::SetThisDeviceTimeToNow()
+{
+	// Add Device
+	FDevice& Device = FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
+	Device.DeviceDateTime = GetDateTimeNowTicks();
+}
+
+void UMySaveGIS::SetThisDeviceTimeToSpecificTime(int64 InTimeTicks)
+{
+	// Add Device
+	FDevice& Device = FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
+	Device.DeviceDateTime = InTimeTicks;
 }
 
 /*

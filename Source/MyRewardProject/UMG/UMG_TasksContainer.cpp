@@ -124,7 +124,6 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	UUMG_BasicTask* BasicTask = CreateWidget<UUMG_BasicTask>(GetOwningPlayer(), UIClass);
 	ScrollBox_Tasks->AddChild(BasicTask);
 
-
 	//move new task to the top
 	SelectedBasicTask = BasicTask;
 	if (UScrollBox* SelectedScrollBox = Cast<UScrollBox>(SelectedBasicTask->GetParent()))
@@ -134,14 +133,16 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 		RemoveAllSelectedBasicTask();
 	}
 
+	//Ture init code 
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
 	BasicTask->TaskData.bIsAddScore = true;
-
 	BasicTask->TaskData.Score = 10;
+	BasicTask->TaskData.SpawnTime = FDateTime::Now().GetTicks();
 
+	BasicTask->RefreshUI();
 
 	MySaveGIS->SaveAllData();
-	BasicTask->RefreshUI();
+
 	ClearThenGenerateSortedOptions();
 	ComboBoxString_TasksClassification->SetSelectedOption(BasicTask->TaskData.SortName);
 }

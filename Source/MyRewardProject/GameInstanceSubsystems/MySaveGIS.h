@@ -38,14 +38,20 @@ struct FTaskData
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	bool bIsAddScore;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	int64 SpawnTime;
+
 	FTaskData()
 	{
+		//This won't be the code to init...
+		//Search this one to init the param you want :Ture init code
 		Score = 10;
 		Days = 0;
 		SavedDays = 0;
 		Times = 1;
 		SavedTimes = 1;
 		bIsAddScore = true;
+		SpawnTime = 0;
 	}
 
 	bool operator==(const FTaskData& Other) const
@@ -79,8 +85,9 @@ USTRUCT(BlueprintType)
 struct FDevice
 {
 	GENERATED_BODY()
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString DeviceID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	int64 DeviceDateTime;
 
 	FDevice() = default;
@@ -95,7 +102,6 @@ struct FDevice
 USTRUCT(BlueprintType)
 struct FAllDataToSave
 {
-public:
 	UPROPERTY(EditAnywhere, Category=Basic, BlueprintReadWrite)
 	TArray<FTaskData> TaskDatum;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Basic)
@@ -121,7 +127,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	FString ContentTypeValue = TEXT("application/json");
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = JFSetting)
 	TArray<FDevice> Devices;
 
 	GENERATED_BODY()
@@ -139,7 +145,6 @@ class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 
 public:
 	
-	FDevice& FindDeviceOrAddNewDevice(TArray<FDevice>& InDevices, const FString& DeviceID);
 
 	void AddChildrenToBasicDatum(UScrollBox* InScrollBox);
 
@@ -159,7 +164,10 @@ public:
 
 	void DelayToInitializeTasksFromGlobalData();
 
+	UPROPERTY()
 	FAllDataToSave Global_AllDataToSave;
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FAllDataToSave& GetGlobal_AllDataToSave() { return Global_AllDataToSave; }
 
 	float AnotherDay = 0;
 
@@ -175,11 +183,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LoadData")
 	bool LoadData();
 
-private:
-	// 生成或获取设备ID
+
+	//for auto save and auto load
+	UFUNCTION(BlueprintCallable)
+	FDevice& FindDeviceOrAddNewDevice(UPARAM(ref) TArray<FDevice>& InDevices, const FString& DeviceID);
+	UFUNCTION(BlueprintCallable)
+	void SetThisDeviceTimeToNow();
+	UFUNCTION(BlueprintCallable)
+	void SetThisDeviceTimeToSpecificTime(int64 InTimeTicks);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FString GenerateDeviceId();
 
-	// 获取系统盘序列号
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FDevice& FindThenGetThisDevice()
+	{
+		return FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
+	}
+
+	UFUNCTION(BlueprintCallable,BlueprintPure)
+	int64 GetDateTimeNowTicks()
+	{
+		return FDateTime::Now().GetTicks();
+	}
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	int64 GetDateTimeTodayTicks()
+	{
+		return FDateTime::Now().GetDate().GetTicks();
+	}
+private:
 	FString GetSystemDriveSerialNumber();
 
 	GENERATED_BODY()
