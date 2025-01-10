@@ -144,7 +144,6 @@ class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 public:
-	
 
 	void AddChildrenToBasicDatum(UScrollBox* InScrollBox);
 

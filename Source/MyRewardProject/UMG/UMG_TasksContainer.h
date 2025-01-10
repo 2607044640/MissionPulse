@@ -28,6 +28,7 @@ DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
+	
 	template <typename Func>
 	void ExecuteForAllChildrenWithLambda(Func Function);
 
