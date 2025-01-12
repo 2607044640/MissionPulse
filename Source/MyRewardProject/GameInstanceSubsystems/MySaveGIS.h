@@ -40,11 +40,13 @@ struct FTaskData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	int64 SpawnTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	int64 ClickTime;
 
 	FTaskData()
 	{
 		//This won't be the code to init...
-		//Search this one to init the param you want :Ture init code
+		//Search this one to init the param you want :True init code
 		Score = 10;
 		Days = 0;
 		SavedDays = 0;
@@ -52,6 +54,7 @@ struct FTaskData
 		SavedTimes = 1;
 		bIsAddScore = true;
 		SpawnTime = 0;
+		ClickTime = 0;
 	}
 
 	bool operator==(const FTaskData& Other) const
@@ -144,7 +147,8 @@ class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 public:
-
+	UFUNCTION(BlueprintCallable)
+	bool IntegrateLocalAndWebToAllDataToSave(UPARAM(ref) const FString& WebSavedString);
 	void AddChildrenToBasicDatum(UScrollBox* InScrollBox);
 
 	UFUNCTION(BlueprintCallable)
@@ -178,7 +182,7 @@ public:
 	void FetchAndParseJSON(const FString& Url);
 
 	UFUNCTION(BlueprintCallable)
-	bool AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETRequest = false);
+	bool AnalysisLoadedStringToAllDataToSave(FString Result, bool bParseRawData_GetRequest = false);
 	UFUNCTION(BlueprintCallable, Category = "LoadData")
 	bool LoadData();
 
@@ -199,16 +203,18 @@ public:
 		return FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
 	}
 
-	UFUNCTION(BlueprintCallable,BlueprintPure)
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	int64 GetDateTimeNowTicks()
 	{
 		return FDateTime::Now().GetTicks();
 	}
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	int64 GetDateTimeTodayTicks()
 	{
 		return FDateTime::Now().GetDate().GetTicks();
 	}
+
 private:
 	FString GetSystemDriveSerialNumber();
 

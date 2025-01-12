@@ -19,13 +19,153 @@
 #include "Microsoft/HideMicrosoftPlatformTypes.h"
 #include "Misc/ScopeLock.h"
 
+// 1. Core System Functions
+/**
+ * Initializes the subsystem and loads saved data
+ * @param Collection The subsystem collection
+ */
 void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	LoadData();
 }
 
+// 2. Data Integration
+/**
+ * Integrates local and web-based task data
+ * @param WebSavedString JSON string containing web data
+ * @return if integrate succeed
+ */
+bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedString)
+{
+	// Cache local data before integration
+	FAllDataToSave LocalData = Global_AllDataToSave;
 
+	// Attempt to parse web data
+	if (!AnalysisLoadedStringToAllDataToSave(WebSavedString, true))
+	{
+		// Restore local data if parsing fails
+		Global_AllDataToSave = LocalData;
+		{
+			// Failed to parse record field from JSON response
+			FString TempStr = FString::Printf(
+				TEXT("Deserialize failed at IntegrateTaskDatumStringLocalAndWeb function"));
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+		}
+		return false;
+	}
+	FAllDataToSave WebData = Global_AllDataToSave;
+
+
+	int32 ScoreAdjustment = 0;
+	// Integrate web tasks with local tasks
+	for (const FTaskData& WebTask : WebData.TaskDatum)
+	{
+		bool FoundTask = false;
+		for (FTaskData& TaskData : LocalData.TaskDatum)
+		{
+			if (TaskData.SpawnTime == WebTask.SpawnTime)
+			{
+				FoundTask = true;
+
+				// Update existing task or add new one
+				// Compare timestamps to determine latest version
+				int32 LocalSavedTimes = TaskData.SavedTimes;
+				int32 ChangedSavedTimes = 0; //record the operation of SavedTimes(How user clicked)
+				int32 LatestScore = TaskData.Score;
+				if (TaskData.ClickTime > WebTask.ClickTime)
+				{
+					//before - latest
+					ChangedSavedTimes = WebTask.SavedTimes - LocalSavedTimes;
+				}
+				else
+				{
+					ChangedSavedTimes = LocalSavedTimes - WebTask.SavedTimes;
+					// Use web version if more recent
+					TaskData = WebTask;
+					LatestScore = WebTask.Score;
+				}
+				if (ChangedSavedTimes)
+				{
+					//todo bug test
+					ScoreAdjustment += ChangedSavedTimes * LatestScore * (WebTask.bIsAddScore ? 1 : -1);
+				}
+				break;
+			}
+		}
+		if (!FoundTask)
+		{
+			{
+				FString
+					TempStr = FString::Printf(TEXT("Add new task %s"), *WebTask.Title);
+				if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+				UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+			}
+
+			// Add new task from web data
+			LocalData.TaskDatum.Add(WebTask); //todo we may want to adjust the position of task
+
+			//adjust score when new task from web is finished or clicked
+			if (int32 WebChangedTimes = WebTask.Times - WebTask.SavedTimes)
+			{
+				//todo bug test
+				ScoreAdjustment += WebChangedTimes * WebTask.Score * (WebTask.bIsAddScore ? 1 : -1);
+			}
+		}
+	}
+	{
+		FString
+			TempStr = FString::Printf(TEXT("score adjust %i"),ScoreAdjustment);
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+	}
+
+
+	//Adjust local Score according ScoreAdjustment
+	if (ScoreAdjustment > 0)
+	{
+		LocalData.GlobalTotalScore += ScoreAdjustment;
+		LocalData.GlobalDailyProgress_Saved += ScoreAdjustment;
+
+		if (LocalData.GlobalDailyProgress <= LocalData.GlobalDailyProgress_Saved &&
+			LocalData.GlobalDailyProgress)
+		{
+			// Calculate the quotient (how many times the divisor fits into the dividend)
+			int32 Quotient = LocalData.GlobalDailyProgress_Saved / LocalData.GlobalDailyProgress;
+
+			// Calculate the remainder (what's left after division)
+			// int32 Remainder = remainder(LocalData.GlobalDailyProgress_Saved,
+			// LocalData.GlobalDailyProgress);
+
+			for (int i = 0; i < Quotient; ++i)
+			{
+				LocalData.GlobalDailyProgress_Saved -= LocalData.GlobalDailyProgress;
+				LocalData.GlobalTotalScore += LocalData.DailyProgressRewardValue;
+			}
+		}
+	}
+	else
+	{
+		LocalData.GlobalTotalScore += ScoreAdjustment;
+	}
+
+	///TaskMap.GenerateValueArray(LocalData.TaskDatum);
+
+	// Use web devices as default value(the devices data from web will always be correct) 
+	LocalData.Devices = WebData.Devices;
+
+	// Persist merged data
+	Global_AllDataToSave = LocalData;
+	return true;
+}
+
+
+// 3. Task Management
+/**
+ * Adds task widgets from a scroll box to basic data
+ * @param InScrollBox The scroll box containing task widgets
+ */
 void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
 {
 	if (!InScrollBox || !InScrollBox->GetAllChildren().IsValidIndex(0))
@@ -46,7 +186,13 @@ void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
 	}
 }
 
-//todo need to change InDevice.DeviceDateTime to current time when save the data
+// 4. Device Management
+/**
+ * Finds or creates a device entry in the devices array
+ * @param InDevices Array of devices
+ * @param DeviceID Unique device identifier
+ * @return Reference to found or new device
+ */
 FDevice& UMySaveGIS::FindDeviceOrAddNewDevice(TArray<FDevice>& InDevices, const FString& DeviceID)
 {
 	for (FDevice& InDevice : InDevices)
@@ -59,6 +205,11 @@ FDevice& UMySaveGIS::FindDeviceOrAddNewDevice(TArray<FDevice>& InDevices, const 
 	return InDevices.EmplaceAt_GetRef(InDevices.Num(), DeviceID, 0);
 }
 
+// 5. System Identification
+/**
+ * Retrieves the system drive serial number
+ * @return Serial number as string, empty if failed
+ */
 FString UMySaveGIS::GetSystemDriveSerialNumber()
 {
 	FString SerialNumber;
@@ -113,6 +264,10 @@ FString UMySaveGIS::GetSystemDriveSerialNumber()
 	return TEXT("");
 }
 
+/**
+ * Generates a unique device identifier
+ * @return Device ID string
+ */
 FString UMySaveGIS::GenerateDeviceId()
 {
 	FString DeviceId;
@@ -141,7 +296,10 @@ FString UMySaveGIS::GenerateDeviceId()
 	return DeviceId;
 }
 
-
+// 6. Data Persistence
+/**
+ * Saves all current task and system data
+ */
 void UMySaveGIS::SaveAllData()
 {
 	// Save To AllDataToSave	
@@ -154,6 +312,11 @@ void UMySaveGIS::SaveAllData()
 	SaveData(Global_AllDataToSave);
 }
 
+// 7. Score Management
+/**
+ * Adds points to global score and daily progress
+ * @param AddNum Amount to add
+ */
 void UMySaveGIS::AddScore(float AddNum)
 {
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
@@ -181,16 +344,29 @@ void UMySaveGIS::AddScore(float AddNum)
 	}
 }
 
+/**
+ * Subtracts points from global score
+ * @param MinusNum Amount to subtract
+ */
 void UMySaveGIS::MinusScore(float MinusNum)
 {
 	Global_AllDataToSave.GlobalTotalScore -= MinusNum;
 }
 
+// 8. Data Retrieval
+/**
+ * Gets current global score
+ * @return Current score value
+ */
 float UMySaveGIS::GetScore()
 {
 	return Global_AllDataToSave.GlobalTotalScore;
 }
 
+/**
+ * Gets saved daily progress
+ * @return Current daily progress value
+ */
 float UMySaveGIS::GetGlobalDailyProgress_Saved()
 {
 	return Global_AllDataToSave.GlobalDailyProgress_Saved;
@@ -201,7 +377,10 @@ float UMySaveGIS::GetDailyProgressRewardValue()
 	return Global_AllDataToSave.DailyProgressRewardValue;
 }
 
-
+// 9. Task Initialization
+/**
+ * Initializes tasks from global data with delay
+ */
 void UMySaveGIS::DelayToInitializeTasksFromGlobalData()
 {
 	if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
@@ -210,6 +389,12 @@ void UMySaveGIS::DelayToInitializeTasksFromGlobalData()
 	}
 }
 
+// 10. Data Serialization
+/**
+ * Saves game data to persistent storage
+ * @param AllDataToSave Data structure to save
+ * @return Success status
+ */
 bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 {
 	TSharedPtr<FJsonObject> MainJsonObject(new FJsonObject);
@@ -232,6 +417,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 		TaskObject->SetBoolField(TEXT("bIsAddScore"), TaskData.bIsAddScore);
 
 		TaskObject->SetStringField(TEXT("SpawnTime"), FString::Printf(TEXT("%lld"), TaskData.SpawnTime));
+		TaskObject->SetStringField(TEXT("ClickTime"), FString::Printf(TEXT("%lld"), TaskData.ClickTime));
 
 		TaskDatumJsonValues.Add(MakeShareable(new FJsonValueObject(TaskObject)));
 	}
@@ -292,40 +478,11 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	return false;
 }
 
-
-// size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp)
-// {
-// 	userp->append((char*)contents, size * nmemb);
-// 	return size * nmemb;
-// }
-//
-// void FetchAndParseJSON(const std::string& url)
-// {
-// 	CURL* curl = curl_easy_init();
-// 	if (curl)
-// 	{
-// 		std::string readBuffer;
-// 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-// 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-// 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-// 		curl_easy_perform(curl);
-// 		curl_easy_cleanup(curl);
-// 		/*
-// 				// Parse JSON
-// 				auto jsonData = parse(readBuffer);
-// 		
-// 				// Example: Access data
-// 				for (const auto& task : jsonData["TaskData"])
-// 				{
-// 					std::string title = task["Title"];
-// 					int score = task["Score"];
-// 					// Do something with the data...
-// 				}
-// 				*/
-// 	}
-// }
-
-
+// 11. Network Operations
+/**
+ * Fetches and parses JSON data from URL
+ * @param Url Source URL for JSON data
+ */
 void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 {
 	// Create the HTTP request
@@ -403,8 +560,13 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 	HttpRequest->ProcessRequest();
 }
 
-
-bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETRequest)
+/**
+ * Analyzes loaded string data and converts to game data
+ * @param Result JSON string to analyze
+ * @param IsGETRequest Flag indicating if from GET request
+ * @return Success status
+ */
+bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result,  bool bParseRawData_GetRequest)
 {
 	TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Result);
 	TSharedPtr<FJsonObject> JsonObject;
@@ -412,7 +574,7 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 	if (FJsonSerializer::Deserialize(JsonReader, JsonObject))
 	{
 		// For GET requests, we need to parse the "record" object first
-		if (IsGETRequest)
+		/*if (IsGETRequest)
 		{
 			if (TSharedPtr<FJsonObject> RecordObject = JsonObject->GetObjectField(TEXT("record")))
 			{
@@ -422,7 +584,38 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 			{
 				return false;
 			}
+		}*/
+
+		if (bParseRawData_GetRequest)
+		{
+			TArray<FString> CommonFields = {TEXT("record"), TEXT("data"), TEXT("result"), TEXT("payload")};
+			bool bFieldFound = false;
+
+			for (const FString& FieldName : CommonFields)
+			{
+				if (JsonObject->HasField(FieldName))
+				{
+					JsonObject = JsonObject->GetObjectField(FieldName);
+					bFieldFound = true;
+					break;
+				}
+			}
+
+			if (!bFieldFound && !bParseRawData_GetRequest)
+			{
+				{
+					FString
+						TempStr = FString::Printf(TEXT("No common fields found and bParseRawData is false"));
+					if (GEngine)
+						GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true,
+						                                 FVector2D(3, 3));
+					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+				}
+
+				return false;
+			}
 		}
+
 
 		// Load task data
 		const TArray<TSharedPtr<FJsonValue>>* JsonValues;
@@ -447,6 +640,7 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool IsGETR
 					TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
 
 					TaskData.SpawnTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("SpawnTime")));
+					TaskData.ClickTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("ClickTime")));
 
 					Global_AllDataToSave.TaskDatum.Add(TaskData);
 				}
@@ -519,18 +713,28 @@ bool UMySaveGIS::LoadData()
 	return false;
 }
 
+// 12. Device Time Management
+/**
+ * Sets current device time to now
+ */
 void UMySaveGIS::SetThisDeviceTimeToNow()
 {
 	// Add Device
 	FDevice& Device = FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
 	Device.DeviceDateTime = GetDateTimeNowTicks();
+	SaveAllData();
 }
 
+/**
+ * Sets device time to specific value
+ * @param InTimeTicks Time value in ticks
+ */
 void UMySaveGIS::SetThisDeviceTimeToSpecificTime(int64 InTimeTicks)
 {
 	// Add Device
 	FDevice& Device = FindDeviceOrAddNewDevice(Global_AllDataToSave.Devices, GenerateDeviceId());
 	Device.DeviceDateTime = InTimeTicks;
+	SaveAllData();
 }
 
 /*

@@ -118,7 +118,6 @@ public:
 	void SlotScoreOnEditFinish(UUMG_BasicTask* InUumg_BasicTask, FText InText);
 	void SlotTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
 	void SlotSavedTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
-	UFUNCTION()
 	void SlotTitleOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
 	void SlotSavedDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
 	void SlotDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);

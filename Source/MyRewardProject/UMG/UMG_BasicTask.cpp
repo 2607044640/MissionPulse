@@ -33,11 +33,21 @@ void UUMG_BasicTask::SlotScoreOnEditFinish(UUMG_BasicTask* InUumg_BasicTask, FTe
 void UUMG_BasicTask::SlotTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
 	TaskData.Times = FCString::Atoi(*InText.ToString());
+	if (TaskData.Times < TaskData.SavedTimes)
+	{
+		TaskData.SavedTimes = TaskData.Times;
+		RefreshUI();
+	}
 }
 
 void UUMG_BasicTask::SlotSavedTimesOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
 	TaskData.SavedTimes = FCString::Atoi(*InText.ToString());
+	if (TaskData.Times < TaskData.SavedTimes)
+	{
+		TaskData.Times = TaskData.SavedTimes;
+		RefreshUI();
+	}
 }
 
 void UUMG_BasicTask::SlotTitleOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
@@ -48,16 +58,29 @@ void UUMG_BasicTask::SlotTitleOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText
 void UUMG_BasicTask::SlotSavedDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
 	TaskData.SavedDays = FCString::Atoi(*InText.ToString());
+	if (TaskData.Days < TaskData.SavedDays)
+	{
+		TaskData.Days = TaskData.SavedDays;
+		RefreshUI();
+	}
 }
 
 void UUMG_BasicTask::SlotDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
 	TaskData.Days = FCString::Atoi(*InText.ToString());
+	if (TaskData.Days < TaskData.SavedDays)
+	{
+		TaskData.SavedDays = TaskData.Days;
+		RefreshUI();
+	}
 }
 
 void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 {
+	//Stop holding, check if the time reach the value (CheckPressedAddOrMinusRate)
 	UKismetSystemLibrary::K2_PauseTimerHandle(this, CheckPressedAddOrMinusHandle);
+
+	//Check is add or minus
 	if (TaskData.SavedTimes && bBasicTaskIsAddTask)
 	{
 		if (OnAddScore.IsBound())
@@ -75,6 +98,9 @@ void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 
 
 	CheckIfTaskFinish();
+
+	//Save the Time(only)
+	TaskData.ClickTime = FDateTime::Now().GetTicks();
 
 	MySaveGIS->SaveAllData();
 }

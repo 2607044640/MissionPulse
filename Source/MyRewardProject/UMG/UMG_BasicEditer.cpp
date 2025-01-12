@@ -49,6 +49,7 @@ void UUMG_BasicEditer::EditableTextBox_BasicOnTextCommitted(const FText& Text, E
 
 void UUMG_BasicEditer::ThisOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText)
 {
+	//set active widget to display
 	if (WidgetSwitcher->GetActiveWidget() == Button)return;
 
 	WidgetSwitcher->SetActiveWidget(Button);

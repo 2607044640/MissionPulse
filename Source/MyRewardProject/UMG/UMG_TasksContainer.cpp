@@ -133,11 +133,12 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 		RemoveAllSelectedBasicTask();
 	}
 
-	//Ture init code 
+	//True init code
 	BasicTask->TaskData.SortName = ComboBoxString_TasksClassification->GetSelectedOption();
 	BasicTask->TaskData.bIsAddScore = true;
 	BasicTask->TaskData.Score = 10;
 	BasicTask->TaskData.SpawnTime = FDateTime::Now().GetTicks();
+	BasicTask->TaskData.ClickTime = FDateTime::Now().GetTicks();
 
 	BasicTask->RefreshUI();
 
