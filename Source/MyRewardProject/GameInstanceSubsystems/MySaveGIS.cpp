@@ -5,6 +5,11 @@
 
 #include "Components/ScrollBox.h"
 #include "HttpModule.h"
+
+#if !PLATFORM_ANDROID
+#include "Developer/DirectoryWatcher/Private/Windows/DirectoryWatchRequestWindows.h"
+#endif
+
 #include "Interfaces/IHttpResponse.h"
 #include "Kismet/GameplayStatics.h"
 #include "MyRewardProject/MyRewardProject.h"
@@ -14,10 +19,6 @@
 #include "MyRewardProject/UMG/UMG_MainUI.h"
 #include "MyRewardProject/UMG/UMG_TasksContainer.h"
 #include "Interfaces/IHttpRequest.h"
-#include "Microsoft/AllowMicrosoftPlatformTypes.h"
-#include <Windows.h>
-#include "Microsoft/HideMicrosoftPlatformTypes.h"
-#include "Misc/ScopeLock.h"
 
 // 1. Core System Functions
 /**
@@ -116,7 +117,7 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 	}
 	{
 		FString
-			TempStr = FString::Printf(TEXT("score adjust %i"),ScoreAdjustment);
+			TempStr = FString::Printf(TEXT("score adjust %i"), ScoreAdjustment);
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
 		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 	}
@@ -205,6 +206,8 @@ FDevice& UMySaveGIS::FindDeviceOrAddNewDevice(TArray<FDevice>& InDevices, const 
 	return InDevices.EmplaceAt_GetRef(InDevices.Num(), DeviceID, 0);
 }
 
+
+#if !PLATFORM_ANDROID
 // 5. System Identification
 /**
  * Retrieves the system drive serial number
@@ -263,6 +266,7 @@ FString UMySaveGIS::GetSystemDriveSerialNumber()
 	*/
 	return TEXT("");
 }
+#endif
 
 /**
  * Generates a unique device identifier
@@ -275,7 +279,9 @@ FString UMySaveGIS::GenerateDeviceId()
 
 	if (DeviceId.IsEmpty())
 	{
+#if !PLATFORM_ANDROID
 		DeviceId = GetSystemDriveSerialNumber();
+#endif
 	}
 	else if (DeviceId.IsEmpty())
 	{
@@ -566,7 +572,7 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
  * @param IsGETRequest Flag indicating if from GET request
  * @return Success status
  */
-bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result,  bool bParseRawData_GetRequest)
+bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool bParseRawData_GetRequest)
 {
 	TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Result);
 	TSharedPtr<FJsonObject> JsonObject;

@@ -216,7 +216,9 @@ public:
 	}
 
 private:
+#if !PLATFORM_ANDROID
 	FString GetSystemDriveSerialNumber();
+#endif
 
 	GENERATED_BODY()
 };

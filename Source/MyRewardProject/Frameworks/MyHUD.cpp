@@ -33,7 +33,6 @@ void AMyHUD::OnWindowFocusChanged(bool bIsFocused)
 	// Put code below into BeginPlay
 	// FSlateApplication::Get().OnApplicationActivationStateChanged()
 	// .AddUObject(this, &AMyHUD::OnWindowFocusChanged);
-
 	// Don't pause in the editor, it's annoying
 #if !WITH_EDITOR
 	//In this area, There's no compilation check. Be careful not to add more logic.Otherwise, packaging will be failed
