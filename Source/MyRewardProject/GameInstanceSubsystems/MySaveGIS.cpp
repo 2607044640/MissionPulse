@@ -47,13 +47,7 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 	{
 		// Restore local data if parsing fails
 		Global_AllDataToSave = LocalData;
-		{
-			// Failed to parse record field from JSON response
-			FString TempStr = FString::Printf(
-				TEXT("Deserialize failed at IntegrateTaskDatumStringLocalAndWeb function"));
-			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-		}
+
 		return false;
 	}
 	FAllDataToSave WebData = Global_AllDataToSave;
@@ -64,33 +58,46 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 	for (const FTaskData& WebTask : WebData.TaskDatum)
 	{
 		bool FoundTask = false;
-		for (FTaskData& TaskData : LocalData.TaskDatum)
+		for (FTaskData& LocalTask : LocalData.TaskDatum)
 		{
-			if (TaskData.SpawnTime == WebTask.SpawnTime)
+			if (LocalTask.SpawnTime == WebTask.SpawnTime)
 			{
 				FoundTask = true;
 
 				// Update existing task or add new one
 				// Compare timestamps to determine latest version
-				int32 LocalSavedTimes = TaskData.SavedTimes;
+				int32 LocalSavedTimes = LocalTask.SavedTimes;
 				int32 ChangedSavedTimes = 0; //record the operation of SavedTimes(How user clicked)
-				int32 LatestScore = TaskData.Score;
-				if (TaskData.ClickTime > WebTask.ClickTime)
+				int32 LatestScore = LocalTask.Score;
+				if (LocalTask.ClickTime > WebTask.ClickTime)
 				{
-					//before - latest
-					ChangedSavedTimes = WebTask.SavedTimes - LocalSavedTimes;
+					break; //if local task is the one which is latest, then don't change anything
 				}
 				else
 				{
+					//before - latest
 					ChangedSavedTimes = LocalSavedTimes - WebTask.SavedTimes;
 					// Use web version if more recent
-					TaskData = WebTask;
+
+					int32 Temp = LocalTask.SavedTimes;
+					
+					LocalTask = WebTask;
 					LatestScore = WebTask.Score;
+					
+					if (LocalTask.Days != 0)
+					{
+						LocalTask.SavedTimes = Temp;
+					}
 				}
 				if (ChangedSavedTimes)
 				{
-					//todo bug test
-					ScoreAdjustment += ChangedSavedTimes * LatestScore * (WebTask.bIsAddScore ? 1 : -1);
+					int64 LocalDay = LocalTask.ClickTime - (LocalTask.ClickTime % ETimespan::TicksPerDay);
+					int64 WebDay = WebTask.ClickTime - (WebTask.ClickTime % ETimespan::TicksPerDay);
+					if (LocalTask.Days == 0 || LocalDay == WebDay)
+					//if not corresponding to Days or LocalDay equal WebDay 
+					{
+						ScoreAdjustment += ChangedSavedTimes * LatestScore * (WebTask.bIsAddScore ? 1 : -1);
+					}
 				}
 				break;
 			}
@@ -110,8 +117,14 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 			//adjust score when new task from web is finished or clicked
 			if (int32 WebChangedTimes = WebTask.Times - WebTask.SavedTimes)
 			{
-				//todo bug test
 				ScoreAdjustment += WebChangedTimes * WebTask.Score * (WebTask.bIsAddScore ? 1 : -1);
+				//todo bug test
+				{
+					FString
+						TempStr = FString::Printf(TEXT("Score new: %i"), ScoreAdjustment);
+					if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+				}
 			}
 		}
 	}
