@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "GenericPlatform/GenericPlatformProcess.h"
+#include "Json.h"
+#include "JsonUtilities.h"
 #include "MySaveGIS.generated.h"
 
 class UScrollBox;
@@ -32,6 +33,10 @@ struct FTaskData
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	int32 SavedTimes; // == 0 -> IsFinish
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
+	int32 ChangedSavedTimes; //record the operation of SavedTimes(How user clicked)
+
 	UPROPERTY(EditAnywhere, Category=JFSetting, BlueprintReadWrite)
 	float Score;
 
@@ -42,6 +47,7 @@ struct FTaskData
 	int64 SpawnTime;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	int64 ClickTime;
+
 
 	FTaskData()
 	{
@@ -55,6 +61,7 @@ struct FTaskData
 		bIsAddScore = true;
 		SpawnTime = 0;
 		ClickTime = 0;
+		ChangedSavedTimes = 0;
 	}
 
 	bool operator==(const FTaskData& Other) const
@@ -139,8 +146,6 @@ struct FAllDataToSave
 /**
  * 
  */
-
-
 UCLASS()
 class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 {

@@ -7,7 +7,8 @@
 #include "HttpModule.h"
 
 #if !PLATFORM_ANDROID
-#include "Developer/DirectoryWatcher/Private/Windows/DirectoryWatchRequestWindows.h"
+#include "HAL/PlatformFileManager.h"
+#include "HAL/FileManager.h"
 #endif
 
 #include "Interfaces/IHttpResponse.h"
@@ -18,7 +19,11 @@
 #include "MyRewardProject/UMG/UMG_BasicTask.h"
 #include "MyRewardProject/UMG/UMG_MainUI.h"
 #include "MyRewardProject/UMG/UMG_TasksContainer.h"
+
+#if !PLATFORM_ANDROID
 #include "Interfaces/IHttpRequest.h"
+#include "Microsoft/AllowMicrosoftPlatformTypes.h"
+#endif
 
 // 1. Core System Functions
 /**
@@ -53,88 +58,65 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 	FAllDataToSave WebData = Global_AllDataToSave;
 
 
-	int32 ScoreAdjustment = 0;
 	// Integrate web tasks with local tasks
+	int32 ScoreAdjustment = 0;
 	for (const FTaskData& WebTask : WebData.TaskDatum)
 	{
 		bool FoundTask = false;
+		// Update existing task or add new one
 		for (FTaskData& LocalTask : LocalData.TaskDatum)
 		{
 			if (LocalTask.SpawnTime == WebTask.SpawnTime)
 			{
 				FoundTask = true;
 
-				// Update existing task or add new one
 				// Compare timestamps to determine latest version
-				int32 LocalSavedTimes = LocalTask.SavedTimes;
-				int32 ChangedSavedTimes = 0; //record the operation of SavedTimes(How user clicked)
+				int32 TempTimeChange = 0; //record the operation of SavedTimes(How user clicked)
 				int32 LatestScore = LocalTask.Score;
-				if (LocalTask.ClickTime > WebTask.ClickTime)
+				if (LocalTask.ClickTime >= WebTask.ClickTime)
 				{
 					break; //if local task is the one which is latest, then don't change anything
 				}
 				else
 				{
 					//before - latest
-					ChangedSavedTimes = LocalSavedTimes - WebTask.SavedTimes;
+					TempTimeChange = LocalTask.ChangedSavedTimes - WebTask.ChangedSavedTimes;
 					// Use web version if more recent
 
-					int32 Temp = LocalTask.SavedTimes;
-					
-					LocalTask = WebTask;
-					LatestScore = WebTask.Score;
-					
-					if (LocalTask.Days != 0)
-					{
-						LocalTask.SavedTimes = Temp;
-					}
-				}
-				if (ChangedSavedTimes)
-				{
+					int32 TempSavedTimes = LocalTask.SavedTimes;
 					int64 LocalDay = LocalTask.ClickTime - (LocalTask.ClickTime % ETimespan::TicksPerDay);
 					int64 WebDay = WebTask.ClickTime - (WebTask.ClickTime % ETimespan::TicksPerDay);
-					if (LocalTask.Days == 0 || LocalDay == WebDay)
-					//if not corresponding to Days or LocalDay equal WebDay 
+
+					LocalTask = WebTask;
+					LatestScore = WebTask.Score;
+
+					if (LocalTask.Days != 0 && LocalDay != WebDay)
+					// if the task is the type of daily task && not the same day
+					// then use local(because the SavedTimes refresh everyday)
 					{
-						ScoreAdjustment += ChangedSavedTimes * LatestScore * (WebTask.bIsAddScore ? 1 : -1);
+						LocalTask.SavedTimes = TempSavedTimes;
 					}
+				}
+				if (TempTimeChange)
+				{
+					ScoreAdjustment += TempTimeChange * LatestScore * (WebTask.bIsAddScore ? 1 : -1);
 				}
 				break;
 			}
 		}
 		if (!FoundTask)
 		{
-			{
-				FString
-					TempStr = FString::Printf(TEXT("Add new task %s"), *WebTask.Title);
-				if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-				UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-			}
-
 			// Add new task from web data
 			LocalData.TaskDatum.Add(WebTask); //todo we may want to adjust the position of task
 
 			//adjust score when new task from web is finished or clicked
-			if (int32 WebChangedTimes = WebTask.Times - WebTask.SavedTimes)
+			if (WebTask.ChangedSavedTimes)
 			{
-				ScoreAdjustment += WebChangedTimes * WebTask.Score * (WebTask.bIsAddScore ? 1 : -1);
-				//todo bug test
-				{
-					FString
-						TempStr = FString::Printf(TEXT("Score new: %i"), ScoreAdjustment);
-					if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-					UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-				}
+				/*need reverse ChangedSavedTimes*/
+				ScoreAdjustment += (-WebTask.ChangedSavedTimes) * WebTask.Score * (WebTask.bIsAddScore ? 1 : -1);
 			}
 		}
 	}
-	{
-		FString
-			TempStr = FString::Printf(TEXT("score adjust %i"), ScoreAdjustment);
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-	}
-
 
 	//Adjust local Score according ScoreAdjustment
 	if (ScoreAdjustment > 0)
@@ -164,8 +146,6 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 		LocalData.GlobalTotalScore += ScoreAdjustment;
 	}
 
-	///TaskMap.GenerateValueArray(LocalData.TaskDatum);
-
 	// Use web devices as default value(the devices data from web will always be correct) 
 	LocalData.Devices = WebData.Devices;
 
@@ -191,7 +171,7 @@ void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
-			// 使用 EmplaceAt_GetRef 直接构造新的 TaskData
+			// use EmplaceAt_GetRef function to construct new TaskData directly
 			Global_AllDataToSave.TaskDatum.EmplaceAt(
 				Global_AllDataToSave.TaskDatum.Num(),
 				UMG_BasicTask->TaskData
@@ -230,9 +210,10 @@ FString UMySaveGIS::GetSystemDriveSerialNumber()
 {
 	FString SerialNumber;
 
+#if PLATFORM_WINDOWS
 	TCHAR WindowsPath[MAX_PATH];
 	GetWindowsDirectory(WindowsPath, MAX_PATH);
-	FString DriveLetter = FString(WindowsPath).Left(2); // Get "C:"(Default Value)
+	FString DriveLetter = FString(WindowsPath).Left(2); // Get "C:"
 	DriveLetter += TEXT("\\");
 
 	TCHAR VolumeNameBuffer[MAX_PATH];
@@ -241,9 +222,8 @@ FString UMySaveGIS::GetSystemDriveSerialNumber()
 	DWORD FileSystemFlags;
 	TCHAR FileSystemNameBuffer[MAX_PATH];
 
-	// Get device information
 	if (GetVolumeInformation(
-		*DriveLetter, // 必须以 "C:\\" 格式结尾
+		*DriveLetter,
 		VolumeNameBuffer,
 		MAX_PATH,
 		&VolumeSerialNumber,
@@ -253,31 +233,12 @@ FString UMySaveGIS::GetSystemDriveSerialNumber()
 		MAX_PATH))
 	{
 		SerialNumber = FString::Printf(TEXT("%08X"), VolumeSerialNumber);
-
-		/*
-		// Add log
-		{
-			FString TempStr = FString::Printf(TEXT("Successfully got drive serial: %s"), *SerialNumber);
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TempStr, true, FVector2D(3, 3));
-			}
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *TempStr);
-		}
-		*/
 		return SerialNumber;
 	}
-	/*
-	//Add error log
-	DWORD Error = GetLastError();
-	FString ErrorMsg = FString::Printf(TEXT("Failed to get drive info. Error code: %d"), Error);
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, ErrorMsg, true, FVector2D(3, 3));
-	}
-	UE_LOG(LogTemp, Error, TEXT("%s"), *ErrorMsg);
-	*/
-	return TEXT("");
+#endif
+
+	// 如果获取失败或不是Windows平台，使用备选方案
+	return FPlatformMisc::GetDeviceId();
 }
 #endif
 
@@ -408,6 +369,7 @@ void UMySaveGIS::DelayToInitializeTasksFromGlobalData()
 	}
 }
 
+
 // 10. Data Serialization
 /**
  * Saves game data to persistent storage
@@ -432,6 +394,8 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 		TaskObject->SetNumberField(TEXT("SavedDays"), TaskData.SavedDays);
 		TaskObject->SetNumberField(TEXT("Times"), TaskData.Times);
 		TaskObject->SetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
+
+		TaskObject->SetNumberField(TEXT("ChangedSavedTimes"), TaskData.ChangedSavedTimes);
 
 		TaskObject->SetBoolField(TEXT("bIsAddScore"), TaskData.bIsAddScore);
 
@@ -554,6 +518,7 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 								TaskObject->TryGetNumberField(TEXT("SavedDays"), TaskData.SavedDays);
 								TaskObject->TryGetNumberField(TEXT("Times"), TaskData.Times);
 								TaskObject->TryGetNumberField(TEXT("SavedTimes"), TaskData.SavedTimes);
+								TaskObject->TryGetNumberField(TEXT("ChangedSavedTimes"), TaskData.ChangedSavedTimes);
 								TaskObject->TryGetBoolField(TEXT("bIsAddScore"), TaskData.bIsAddScore);
 
 								Global_AllDataToSave.TaskDatum.Add(TaskData);
@@ -656,8 +621,8 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool bParse
 					TaskData.SavedDays = TaskObject->GetNumberField(TEXT("SavedDays"));
 					TaskData.Times = TaskObject->GetNumberField(TEXT("Times"));
 					TaskData.SavedTimes = TaskObject->GetNumberField(TEXT("SavedTimes"));
+					TaskData.ChangedSavedTimes = TaskObject->GetNumberField(TEXT("ChangedSavedTimes"));
 					TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
-
 					TaskData.SpawnTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("SpawnTime")));
 					TaskData.ClickTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("ClickTime")));
 

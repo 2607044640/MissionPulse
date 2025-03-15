@@ -106,9 +106,10 @@ void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 }
 
 
-void UUMG_BasicTask::AddScore(UUMG_BasicTask* BasicTask)
+void UUMG_BasicTask::AddTaskSavedTimes(UUMG_BasicTask* BasicTask)
 {
 	TaskData.SavedTimes = TaskData.SavedTimes - 1;
+	TaskData.ChangedSavedTimes = TaskData.ChangedSavedTimes - 1;
 
 	if (TaskData.bIsAddScore)
 	{
@@ -122,10 +123,11 @@ void UUMG_BasicTask::AddScore(UUMG_BasicTask* BasicTask)
 	}
 }
 
-void UUMG_BasicTask::MinusScore(UUMG_BasicTask* Uumg_BasicTask)
+void UUMG_BasicTask::SubTaskSavedTimes(UUMG_BasicTask* Uumg_BasicTask)
 {
 	bBasicTaskIsAddTask = true;
 	TaskData.SavedTimes = TaskData.SavedTimes + 1;
+	TaskData.ChangedSavedTimes = TaskData.ChangedSavedTimes + 1;
 
 	if (TaskData.bIsAddScore)
 	{
@@ -212,8 +214,8 @@ void UUMG_BasicTask::NativeConstruct()
 	ButtonSelect->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonSelectOnClick);
 	Button_Finish->OnClicked.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnClicked);
 	Button_Finish->OnPressed.AddDynamic(this, &UUMG_BasicTask::Button_FinishOnPressed);
-	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddScore);
-	OnMinusScore.AddUObject(this, &UUMG_BasicTask::MinusScore);
+	OnAddScore.AddUObject(this, &UUMG_BasicTask::AddTaskSavedTimes);
+	OnMinusScore.AddUObject(this, &UUMG_BasicTask::SubTaskSavedTimes);
 	OnButtonClicked.AddUObject(this, &UUMG_BasicTask::ButtonClicked);
 	ButtonAddScore->OnClicked.AddDynamic(this, &UUMG_BasicTask::ButtonAddScoreOnClicked);
 

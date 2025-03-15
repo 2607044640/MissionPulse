@@ -122,7 +122,7 @@ public:
 	void SlotSavedDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
 	void SlotDaysOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText InText);
 	void ButtonClicked(UUMG_BasicTask* Uumg_BasicTask);
-	void MinusScore(UUMG_BasicTask* Uumg_BasicTask);
+	void SubTaskSavedTimes(UUMG_BasicTask* Uumg_BasicTask);
 	void CheckPressedAddOrMinus();
 	UFUNCTION()
 	void Button_FinishOnPressed();
@@ -149,7 +149,7 @@ public:
 	void TaskOnSelected();
 	UFUNCTION()
 	void TaskOnUnSelected();
-	void AddScore(UUMG_BasicTask* BasicTask);
+	void AddTaskSavedTimes(UUMG_BasicTask* BasicTask);
 
 	GENERATED_BODY()
 };
