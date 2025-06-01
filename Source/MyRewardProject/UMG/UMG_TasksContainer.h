@@ -141,5 +141,16 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ScrollTheChildDown(bool IsDown, UWidget* InBasicTask);
+
+private:
+	// Timer for checking day changes
+	FTimerHandle DayCheckTimerHandle;
+	
+	// Last checked day timestamp
+	int64 LastCheckedDay;
+	
+	// Check for day change
+	void CheckForDayChange();
+
 	GENERATED_BODY()
 };

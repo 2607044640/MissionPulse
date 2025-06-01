@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UMG_TasksContainer.h"
 #include "BFL_FunctionUtilities.h"
 #include "UMG_BasicEditer.h"
@@ -17,7 +14,6 @@
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "Components/EditableTextBox.h"
-
 
 void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
 {
@@ -89,7 +85,6 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 		}
 
 
-		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
 
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
 
@@ -181,27 +176,6 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithLambda(Func Function)
 	}
 }
 
-/*
-#include <functional>
-template <class TClass>
-void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func)
-{
-	for (UWidget* Child : ScrollBox_Tasks_Finish->GetAllChildren())
-	{
-		if (TClass* CastedChild = Cast<TClass>(Child))
-		{
-			Func(CastedChild);
-		}
-	}
-	for (UWidget* Child : ScrollBox_Tasks->GetAllChildren())
-	{
-		if (TClass* CastedChild = Cast<TClass>(Child))
-		{
-			Func(CastedChild);
-		}
-	}
-}
-*/
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
 	ESelectInfo::Type SelectionType)
 {
@@ -495,6 +469,50 @@ void UUMG_TasksContainer::NativeConstruct()
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
 
 	RegenerateTasksFromGlobalData();
+	
+	// Initialize day tracking and set timer for day change checks
+	LastCheckedDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
+	GetWorld()->GetTimerManager().SetTimer(DayCheckTimerHandle, this, &UUMG_TasksContainer::CheckForDayChange, 6.0f, true);
+}
+
+void UUMG_TasksContainer::CheckForDayChange()
+{
+	if (!MySaveGIS)
+	{
+		return;
+	}
+	{
+		FString
+			TempStr = FString::Printf(TEXT("Checking"));
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+	}
+	int64 CurrentDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
+	
+	// Check if the day has changed
+	if (LastCheckedDay != CurrentDay && CurrentDay - LastCheckedDay > 0)
+	{
+		// Calculate days passed
+		int32 DaysPassed = CurrentDay - LastCheckedDay;
+		
+		// Update LastCheckedDay
+		LastCheckedDay = CurrentDay;
+		
+		// Notify SaveGIS about day change (it will be stored in AnotherDay)
+		MySaveGIS->AnotherDay = DaysPassed;
+		{
+			FString
+				TempStr = FString::Printf(TEXT("Generating"));
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
+			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+		}
+
+		// Regenerate UI
+		RegenerateTasksFromGlobalData();
+		
+		// Save changes
+		MySaveGIS->SaveAllData();
+	}
 }
 
 void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname)

@@ -2,6 +2,9 @@
 
 
 #include "MySaveGIS.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "MyRewardProject/UMG/UMG_TasksContainer.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Components/ScrollBox.h"
 #include "HttpModule.h"
@@ -12,13 +15,11 @@
 #endif
 
 #include "Interfaces/IHttpResponse.h"
-#include "Kismet/GameplayStatics.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/BlueprintFunctionLibraries/BFL_GetClasses.h"
 #include "MyRewardProject/Frameworks/MyHUD.h"
 #include "MyRewardProject/UMG/UMG_BasicTask.h"
 #include "MyRewardProject/UMG/UMG_MainUI.h"
-#include "MyRewardProject/UMG/UMG_TasksContainer.h"
 
 #if !PLATFORM_ANDROID
 #include "Interfaces/IHttpRequest.h"
@@ -44,6 +45,7 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
  */
 bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedString)
 {
+
 	// Cache local data before integration
 	FAllDataToSave LocalData = Global_AllDataToSave;
 
@@ -409,7 +411,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	//Devices
 
 	TArray<TSharedPtr<FJsonValue>> DevicesArray;
-	for (const FDevice& Device : Global_AllDataToSave.Devices)
+	for (const FDevice& Device : AllDataToSave.Devices)
 	{
 		TSharedPtr<FJsonObject> DeviceObj = MakeShareable(new FJsonObject);
 		DeviceObj->SetStringField(TEXT("DeviceID"), Device.DeviceID);
@@ -422,19 +424,17 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	TArray<TSharedPtr<FJsonValue>> OtherJsonValues;
 	TSharedPtr<FJsonObject> OtherJsonObject(new FJsonObject);
 
-	OtherJsonObject->SetNumberField(
-		TEXT("GlobalDayToRecord"), GetDateTimeTodayTicks() / ETimespan::TicksPerDay);
-	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
-	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
-	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress_Saved"), Global_AllDataToSave.GlobalDailyProgress_Saved);
-	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
-	OtherJsonObject->SetNumberField(TEXT("DailyProgressRewardValue"), Global_AllDataToSave.DailyProgressRewardValue);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), GetDateTimeTodayTicks() / ETimespan::TicksPerDay);
+	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), AllDataToSave.GlobalTotalScore);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), AllDataToSave.GlobalDailyProgress);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress_Saved"), AllDataToSave.GlobalDailyProgress_Saved);
+	OtherJsonObject->SetNumberField(TEXT("DailyProgressRewardValue"), AllDataToSave.DailyProgressRewardValue);
 
-	OtherJsonObject->SetStringField(TEXT("URL"), Global_AllDataToSave.URL);
-	OtherJsonObject->SetStringField(TEXT("AuthorizationName"), Global_AllDataToSave.AuthorizationName);
-	OtherJsonObject->SetStringField(TEXT("AuthorizationValue"), Global_AllDataToSave.AuthorizationValue);
-	OtherJsonObject->SetStringField(TEXT("ContentTypeName"), Global_AllDataToSave.ContentTypeName);
-	OtherJsonObject->SetStringField(TEXT("ContentTypeValue"), Global_AllDataToSave.ContentTypeValue);
+	OtherJsonObject->SetStringField(TEXT("URL"), AllDataToSave.URL);
+	OtherJsonObject->SetStringField(TEXT("AuthorizationName"), AllDataToSave.AuthorizationName);
+	OtherJsonObject->SetStringField(TEXT("AuthorizationValue"), AllDataToSave.AuthorizationValue);
+	OtherJsonObject->SetStringField(TEXT("ContentTypeName"), AllDataToSave.ContentTypeName);
+	OtherJsonObject->SetStringField(TEXT("ContentTypeValue"), AllDataToSave.ContentTypeValue);
 
 	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
 
@@ -461,11 +461,12 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	return false;
 }
 
+
 // 11. Network Operations
 /**
  * Fetches and parses JSON data from URL
  * @param Url Source URL for JSON data
- */
+ *
 void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 {
 	// Create the HTTP request
@@ -543,7 +544,7 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 	HttpRequest->SetVerb("GET");
 	HttpRequest->ProcessRequest();
 }
-
+*/
 /**
  * Analyzes loaded string data and converts to game data
  * @param Result JSON string to analyze

@@ -22,7 +22,7 @@ void AMyHUD::MakeUserWidget(T*& ObjectPtr, TSubclassOf<T> UIClass)
 		}
 		else
 		{
-			FString TempStr = FString::Printf(TEXT("No specific class specified at : %s"), *GetClass()->GetName());
+			FString TempStr = FString::Printf(TEXT("No specific class specified at  :  %s"), *GetClass()->GetName());
 			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
 			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 		}

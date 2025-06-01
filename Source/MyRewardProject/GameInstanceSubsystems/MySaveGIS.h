@@ -182,10 +182,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SaveData")
 	bool SaveData(FAllDataToSave AllDataToSave);
 
-
+/*
 	UFUNCTION(BlueprintCallable)
 	void FetchAndParseJSON(const FString& Url);
-
+*/
 	UFUNCTION(BlueprintCallable)
 	bool AnalysisLoadedStringToAllDataToSave(FString Result, bool bParseRawData_GetRequest = false);
 	UFUNCTION(BlueprintCallable, Category = "LoadData")
