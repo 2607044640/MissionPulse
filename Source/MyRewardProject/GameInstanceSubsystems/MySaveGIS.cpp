@@ -45,7 +45,6 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
  */
 bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedString)
 {
-
 	// Cache local data before integration
 	FAllDataToSave LocalData = Global_AllDataToSave;
 
@@ -160,16 +159,38 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 // 3. Task Management
 /**
  * Adds task widgets from a scroll box to basic data
- * @param InScrollBox The scroll box containing task widgets
+ * @param InChildren The scroll box containing task widgets
  */
-void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
+void UMySaveGIS::AddChildrenToBasicDatum(TArray<UWidget*> InChildren)
 {
-	if (!InScrollBox || !InScrollBox->GetAllChildren().IsValidIndex(0))
+	if (!InChildren.IsValidIndex(0))
 	{
 		return;
 	}
 
-	for (UWidget* Child : InScrollBox->GetAllChildren())
+	// Sort widgets based on max time (bigger time first)
+	InChildren.Sort([](const UWidget& A, const UWidget& B)
+	{
+		UUMG_BasicTask* TaskA = Cast<UUMG_BasicTask>(const_cast<UWidget*>(&A));
+		UUMG_BasicTask* TaskB = Cast<UUMG_BasicTask>(const_cast<UWidget*>(&B));
+
+		// If both are valid tasks, sort by time (bigger time first)
+		if (TaskA && TaskB)
+		{
+			int64 BiggerTimeA = TaskA->TaskData.EditTime;
+
+			int64 BiggerTimeB = TaskB->TaskData.EditTime;
+
+			// Return true if A should come before B (bigger time first)
+			return BiggerTimeA > BiggerTimeB;
+		}
+
+		// If only one is a task, prioritize tasks over non-tasks
+		return TaskA != nullptr;
+	});
+
+	// Add sorted children to the global data
+	for (UWidget* Child : InChildren)
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
@@ -284,14 +305,29 @@ FString UMySaveGIS::GenerateDeviceId()
  */
 void UMySaveGIS::SaveAllData()
 {
+	Global_AllDataToSave.TaskDatum.Empty();
+
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
-	Global_AllDataToSave.TaskDatum.Empty();
-	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks);
-	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks_Finish);
+
+	// Combine children from both scroll boxes
+	TArray<UWidget*> AllChildren;
+	if (TasksContainer->ScrollBox_Tasks)
+	{
+		AllChildren.Append(TasksContainer->ScrollBox_Tasks->GetAllChildren());
+	}
+	if (TasksContainer->ScrollBox_Tasks_Finish)
+	{
+		AllChildren.Append(TasksContainer->ScrollBox_Tasks_Finish->GetAllChildren());
+	}
+
+	// Process all children
+	AddChildrenToBasicDatum(AllChildren);
 
 	//Parse,Serialize
 	SaveData(Global_AllDataToSave);
+
+	TasksContainer->ClearThenGenerateSortedOptions();
 }
 
 // 7. Score Management
@@ -403,6 +439,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 
 		TaskObject->SetStringField(TEXT("SpawnTime"), FString::Printf(TEXT("%lld"), TaskData.SpawnTime));
 		TaskObject->SetStringField(TEXT("ClickTime"), FString::Printf(TEXT("%lld"), TaskData.ClickTime));
+		TaskObject->SetStringField(TEXT("EditTime"), FString::Printf(TEXT("%lld"), TaskData.EditTime));
 
 		TaskDatumJsonValues.Add(MakeShareable(new FJsonValueObject(TaskObject)));
 	}
@@ -626,6 +663,7 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool bParse
 					TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
 					TaskData.SpawnTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("SpawnTime")));
 					TaskData.ClickTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("ClickTime")));
+					TaskData.EditTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("EditTime")));
 
 					Global_AllDataToSave.TaskDatum.Add(TaskData);
 				}

@@ -28,48 +28,10 @@ DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
-	
-	template <typename Func>
-	void ExecuteForAllChildrenWithLambda(Func Function);
-
-	// template <class TClass>
-	// void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
-	/*template <class TClass>
-	void ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func);*/
-	UFUNCTION(BlueprintCallable)
-	void ButtonAddTaskOnClick();
-	
-	void SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem);
-	
-	UFUNCTION()
-	void ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
-	void TaskDataTransformToTask(FTaskData InTaskData);
-
-	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
-	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
+public:
 	UFUNCTION(BlueprintCallable)
 	void ClearThenGenerateSortedOptions();
-
-	template <class TClass, class TMemberFunc, class... TArgs>
-	void ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args);
-	void ChangeOption();
-
-
-	UFUNCTION()
-	void EditableTextBox_SortNameOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod);
-	UFUNCTION()
-	void Button_AddSortNameOnClicked();
-	UFUNCTION()
-	void Button_ChangeSortNamesOnClicked();
-	UFUNCTION()
-	void ButtonChangeSortName_TaskOnClick1();
-	virtual void NativeConstruct() override;
-	bool bIsChangeSortName_Task;
-	UPROPERTY()
-	UUMG_BasicTask* TempSelectedBasicTask;
-	FString TempStringRecorderForSelection;
-
-public:
+	
 	UFUNCTION(BlueprintCallable)
 	void RemoveChildrenThatVisible();
 	UFUNCTION(BlueprintCallable)
@@ -141,7 +103,45 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ScrollTheChildDown(bool IsDown, UWidget* InBasicTask);
+private:
+	
+	template <typename Func>
+	void ExecuteForAllChildrenWithLambda(Func Function);
 
+	// template <class TClass>
+	// void ExecuteForAllChildrenWithStdFunction(UScrollBox* ScrollBox, std::function<void(TClass*)> Func);
+	/*template <class TClass>
+	void ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func);*/
+	UFUNCTION(BlueprintCallable)
+	void ButtonAddTaskOnClick();
+	
+	void SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem);
+	
+	UFUNCTION()
+	void ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+	void TaskDataTransformToTask(FTaskData InTaskData);
+
+	void BasicEditer_GlobalDailyProgressOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
+	void BasicEditer_DailyProgressRewardValueOnEditFinish(UUMG_BasicTask* Uumg_BasicTask, FText Text);
+
+	template <class TClass, class TMemberFunc, class... TArgs>
+	void ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args);
+	void ChangeOption();
+
+
+	UFUNCTION()
+	void EditableTextBox_SortNameOnTextCommitted(const FText& Text, ETextCommit::Type CommitMethod);
+	UFUNCTION()
+	void Button_AddSortNameOnClicked();
+	UFUNCTION()
+	void Button_ChangeSortNamesOnClicked();
+	UFUNCTION()
+	void ButtonChangeSortName_TaskOnClick1();
+	virtual void NativeConstruct() override;
+	bool bIsChangeSortName_Task;
+	UPROPERTY()
+	UUMG_BasicTask* TempSelectedBasicTask;
+	FString TempStringRecorderForSelection;
 private:
 	// Timer for checking day changes
 	FTimerHandle DayCheckTimerHandle;

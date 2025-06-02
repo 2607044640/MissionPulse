@@ -15,13 +15,6 @@
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "Components/EditableTextBox.h"
 
-void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
-{
-	if (!ScrollBox_Tasks_Finish->HasChild(Uumg_BasicTask))
-	{
-		ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
-	}
-}
 
 void UUMG_TasksContainer::BroadcastBasicTaskUnselected(UUMG_BasicTask* UMG_BasicTask)
 {
@@ -85,7 +78,6 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 		}
 
 
-
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
 
 		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
@@ -103,6 +95,14 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 		float FinalScrollOffset = AverageLength * SelectedScrollBox->GetChildIndex(InBasicTask);
 
 		SelectedScrollBox->SetScrollOffset(FinalScrollOffset);
+	}
+}
+
+void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
+{
+	if (!ScrollBox_Tasks_Finish->HasChild(Uumg_BasicTask))
+	{
+		ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
 	}
 }
 
@@ -134,12 +134,12 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	BasicTask->TaskData.Score = 10;
 	BasicTask->TaskData.SpawnTime = FDateTime::Now().GetTicks();
 	BasicTask->TaskData.ClickTime = FDateTime::Now().GetTicks();
+	BasicTask->TaskData.EditTime = FDateTime::Now().GetTicks();
 
 	BasicTask->RefreshUI();
 
 	MySaveGIS->SaveAllData();
 
-	ClearThenGenerateSortedOptions();
 	ComboBoxString_TasksClassification->SetSelectedOption(BasicTask->TaskData.SortName);
 }
 
@@ -265,7 +265,6 @@ void UUMG_TasksContainer::ClearThenGenerateSortedOptions()
 	{
 		TempOption = ComboBoxString_TasksClassification->GetSelectedOption();
 	}
-
 
 	//ComboBoxString_TasksClassification
 	ComboBoxString_TasksClassification->ClearOptions();
@@ -469,10 +468,11 @@ void UUMG_TasksContainer::NativeConstruct()
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
 
 	RegenerateTasksFromGlobalData();
-	
+
 	// Initialize day tracking and set timer for day change checks
 	LastCheckedDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
-	GetWorld()->GetTimerManager().SetTimer(DayCheckTimerHandle, this, &UUMG_TasksContainer::CheckForDayChange, 6.0f, true);
+	GetWorld()->GetTimerManager().SetTimer(DayCheckTimerHandle, this, &UUMG_TasksContainer::CheckForDayChange, 6.0f,
+	                                       true);
 }
 
 void UUMG_TasksContainer::CheckForDayChange()
@@ -481,37 +481,32 @@ void UUMG_TasksContainer::CheckForDayChange()
 	{
 		return;
 	}
-	{
-		FString
-			TempStr = FString::Printf(TEXT("Checking"));
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-	}
+
 	int64 CurrentDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
-	
+
 	// Check if the day has changed
 	if (LastCheckedDay != CurrentDay && CurrentDay - LastCheckedDay > 0)
 	{
 		// Calculate days passed
 		int32 DaysPassed = CurrentDay - LastCheckedDay;
-		
+
 		// Update LastCheckedDay
 		LastCheckedDay = CurrentDay;
-		
+
 		// Notify SaveGIS about day change (it will be stored in AnotherDay)
 		MySaveGIS->AnotherDay = DaysPassed;
-		{
-			FString
-				TempStr = FString::Printf(TEXT("Generating"));
-			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TempStr, true, FVector2D(3, 3));
-			UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
-		}
+
+		FString ComboBoxString_TasksClassification_TempString(ComboBoxString_TasksClassification->GetSelectedOption());
+		//todo refocus on the page
 
 		// Regenerate UI
 		RegenerateTasksFromGlobalData();
-		
+
 		// Save changes
 		MySaveGIS->SaveAllData();
+
+		//todo refocus on the page
+		ComboBoxString_TasksClassification->SetSelectedOption(ComboBoxString_TasksClassification_TempString);
 	}
 }
 
