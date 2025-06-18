@@ -7,8 +7,8 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=F38049B0_002D85D7_002D353E_002DB221_002D8E08CACE5878_002Fdl_003ASource_003A_002E_002E_003F_002E_002E_003FSource_002Fd_003AMyRewardProject_002Fd_003AUMG_002Ff_003AUMG_005FTasksContainer_002Ecpp/@EntryIndexedValue">ExplicitlyExcluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=F38049B0_002D85D7_002D353E_002DB221_002D8E08CACE5878_002Fdl_003ASource_003A_002E_002E_003F_002E_002E_003FSource_002Fd_003AMyRewardProject_002Fd_003AUMG_002Ff_003AUMG_005FTasksContainer_002Eh/@EntryIndexedValue">ExplicitlyExcluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/PencilsConfiguration/ActualSeverity/@EntryValue">INFO</s:String>
-	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\MSBuild.exe</s:String>
-	<s:Int64 x:Key="/Default/Environment/Hierarchy/Build/BuildTool/MsbuildVersion/@EntryValue">1114112</s:Int64>
+	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">C:\Program Files\Rider\JetBrains Rider 2023.3.1\tools\MSBuild\Current\Bin\amd64\MSBuild.exe</s:String>
+	
 	
 	
 	

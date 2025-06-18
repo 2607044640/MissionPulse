@@ -337,6 +337,8 @@ void UMySaveGIS::SaveAllData()
  */
 void UMySaveGIS::AddScore(float AddNum)
 {
+	ScoreChangedBefore = Global_AllDataToSave.GlobalTotalScore;
+	
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
 	Global_AllDataToSave.GlobalDailyProgress_Saved += AddNum;
 
@@ -368,7 +370,16 @@ void UMySaveGIS::AddScore(float AddNum)
  */
 void UMySaveGIS::MinusScore(float MinusNum)
 {
-	Global_AllDataToSave.GlobalTotalScore -= MinusNum;
+	ScoreChangedBefore = Global_AllDataToSave.GlobalTotalScore;
+
+	if (Global_AllDataToSave.GlobalTotalScore - MinusNum < 0)
+	{
+		Global_AllDataToSave.GlobalTotalScore -= MinusNum * PunishMultiplier;
+	}
+	else
+	{
+		Global_AllDataToSave.GlobalTotalScore -= MinusNum;
+	}
 }
 
 // 8. Data Retrieval

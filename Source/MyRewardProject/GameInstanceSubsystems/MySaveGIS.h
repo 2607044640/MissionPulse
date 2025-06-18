@@ -177,6 +177,10 @@ public:
 
 	UPROPERTY()
 	FAllDataToSave Global_AllDataToSave;
+	UPROPERTY(BlueprintReadOnly)
+	float ScoreChangedBefore;
+	UPROPERTY(BlueprintReadOnly)
+	float PunishMultiplier = 1.2f;
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FAllDataToSave& GetGlobal_AllDataToSave() { return Global_AllDataToSave; }
 

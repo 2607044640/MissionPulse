@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.3",
+	"EngineAssociation": "5.5",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -19,29 +19,9 @@
 			]
 		},
 		{
-			"Name": "AutoNodeArranger",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/565cf724479c4c2f9138b6428cfd74b1"
-		},
-		{
-			"Name": "CPathfinding",
-			"Enabled": false,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/c533ad0234c540fb81bdfa7bd55d3514"
-		},
-		{
 			"Name": "RestartEditor",
 			"Enabled": true,
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/a00eb1e478ae4a8fb655aa22f9125b07"
-		},
-		{
-			"Name": "SimpleCharts",
-			"Enabled": false,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/0ed62f4ea24a4897ae2920fe45ec11df"
-		},
-		{
-			"Name": "RecentBlueprintMenu",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/484f72297c144cf9b5c35fea3359500c"
 		},
 		{
 			"Name": "ProjectCleaner",
@@ -54,17 +34,9 @@
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/d9baaaeadeaf41dcb52b3f6e134e9514"
 		},
 		{
-			"Name": "BlueprintFunctionLibrary_UI",
-			"Enabled": false
-		},
-		{
-			"Name": "LiveBlueprintDebugger",
-			"Enabled": false,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/6019cfbf80bb4942add3b61d9180380a"
-		},
-		{
-			"Name": "HttpBlueprint",
-			"Enabled": true
+			"Name": "AutoNodeArranger",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/565cf724479c4c2f9138b6428cfd74b1"
 		}
 	]
 }
