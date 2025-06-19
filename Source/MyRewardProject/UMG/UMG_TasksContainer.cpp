@@ -519,12 +519,13 @@ void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FTex
 	BasicTask->TaskData.SortName = Sortname.ToString();
 }
 
+
 UPanelSlot* UUMG_TasksContainer::MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox)
 {
 	UPanelSlot* NewSlot = ScrollBox->AddChild(Content);
 	int32 CurrentIndex = ScrollBox->GetChildIndex(Content);
-	ScrollBox->Slots.RemoveAt(CurrentIndex);
-	ScrollBox->Slots.Insert(Content->Slot, FMath::Clamp(Index, 0, ScrollBox->Slots.Num()));
+	ScrollBox->MyGetSlots().RemoveAt(CurrentIndex);
+	ScrollBox->MyGetSlots().Insert(Content->Slot, FMath::Clamp(Index, 0, ScrollBox->MyGetSlots().Num()));
 	return NewSlot;
 }
 
