@@ -167,38 +167,12 @@ void UMySaveGIS::AddChildrenToBasicDatum(TArray<UWidget*> InChildren)
 	{
 		return;
 	}
-
-	// Sort widgets based on max time (bigger time first)
-	InChildren.Sort([](const UWidget& A, const UWidget& B)
-	{
-		UUMG_BasicTask* TaskA = Cast<UUMG_BasicTask>(const_cast<UWidget*>(&A));
-		UUMG_BasicTask* TaskB = Cast<UUMG_BasicTask>(const_cast<UWidget*>(&B));
-
-		// If both are valid tasks, sort by time (bigger time first)
-		if (TaskA && TaskB)
-		{
-			int64 BiggerTimeA = TaskA->TaskData.EditTime;
-
-			int64 BiggerTimeB = TaskB->TaskData.EditTime;
-
-			// Return true if A should come before B (bigger time first)
-			return BiggerTimeA > BiggerTimeB;
-		}
-
-		// If only one is a task, prioritize tasks over non-tasks
-		return TaskA != nullptr;
-	});
-
-	// Add sorted children to the global data
 	for (UWidget* Child : InChildren)
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
 			// use EmplaceAt_GetRef function to construct new TaskData directly
-			Global_AllDataToSave.TaskDatum.EmplaceAt(
-				Global_AllDataToSave.TaskDatum.Num(),
-				UMG_BasicTask->TaskData
-			);
+			Global_AllDataToSave.TaskDatum.Add(UMG_BasicTask->TaskData);
 		}
 	}
 }
@@ -310,24 +284,14 @@ void UMySaveGIS::SaveAllData()
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
 
-	// Combine children from both scroll boxes
-	TArray<UWidget*> AllChildren;
-	if (TasksContainer->ScrollBox_Tasks)
-	{
-		AllChildren.Append(TasksContainer->ScrollBox_Tasks->GetAllChildren());
-	}
-	if (TasksContainer->ScrollBox_Tasks_Finish)
-	{
-		AllChildren.Append(TasksContainer->ScrollBox_Tasks_Finish->GetAllChildren());
-	}
-
 	// Process all children
-	AddChildrenToBasicDatum(AllChildren);
+	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks->GetAllChildren());
+	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks_Finish->GetAllChildren());
 
 	//Parse,Serialize
 	SaveData(Global_AllDataToSave);
 
-	TasksContainer->ClearThenGenerateSortedOptions();
+	//TasksContainer->ClearThenGenerateSortedOptions();
 }
 
 // 7. Score Management
@@ -338,7 +302,7 @@ void UMySaveGIS::SaveAllData()
 void UMySaveGIS::AddScore(float AddNum)
 {
 	ScoreChangedBefore = Global_AllDataToSave.GlobalTotalScore;
-	
+
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
 	Global_AllDataToSave.GlobalDailyProgress_Saved += AddNum;
 
@@ -405,19 +369,6 @@ float UMySaveGIS::GetDailyProgressRewardValue()
 {
 	return Global_AllDataToSave.DailyProgressRewardValue;
 }
-
-// 9. Task Initialization
-/**
- * Initializes tasks from global data with delay
- */
-void UMySaveGIS::DelayToInitializeTasksFromGlobalData()
-{
-	if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
-	{
-		MyHUD->MainUI->TasksContainer->RegenerateTasksFromGlobalData();
-	}
-}
-
 
 // 10. Data Serialization
 /**

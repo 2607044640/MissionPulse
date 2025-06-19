@@ -345,8 +345,8 @@ void UUMG_TasksContainer::ChangeOption()
 	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::ChangeChildrenSortname,
 	                          EditableTextBox_SortName->GetText());
 	MySaveGIS->SaveAllData();
-	ClearThenGenerateSortedOptions();
-	ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
+	//ClearThenGenerateSortedOptions();
+	//ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
 	EditableTextBox_SortName->SetVisibility(ESlateVisibility::Collapsed);
 }
 

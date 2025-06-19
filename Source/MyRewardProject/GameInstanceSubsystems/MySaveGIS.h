@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "Json.h"
-#include "JsonUtilities.h"
 #include "Components/Widget.h"
 #include "MySaveGIS.generated.h"
 
@@ -173,7 +171,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
 
-	void DelayToInitializeTasksFromGlobalData();
 
 	UPROPERTY()
 	FAllDataToSave Global_AllDataToSave;
