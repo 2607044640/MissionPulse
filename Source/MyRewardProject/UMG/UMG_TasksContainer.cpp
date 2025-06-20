@@ -91,7 +91,7 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 
 		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
 
-		SelectedScrollBox->InsertChildAt(TempIndex,InBasicTask);
+		SelectedScrollBox->InsertChildAt(TempIndex, InBasicTask);
 
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
 
@@ -130,7 +130,7 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	SelectedBasicTask = BasicTask;
 	if (UScrollBox* SelectedScrollBox = Cast<UScrollBox>(SelectedBasicTask->GetParent()))
 	{
-		SelectedScrollBox->InsertChildAt(0,SelectedBasicTask);
+		SelectedScrollBox->InsertChildAt(0, SelectedBasicTask);
 		//MyInsertChildAt(0, SelectedBasicTask, SelectedScrollBox);
 		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
 		RemoveAllSelectedBasicTask();
@@ -365,10 +365,10 @@ void UUMG_TasksContainer::ChangeOption()
 	FText TempText = EditableTextBox_SortName->GetText();
 	//ChangeOption
 	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::ChangeChildrenSortname,
-	                       TempText   );
+	                          TempText);
 	MySaveGIS->SaveAllData();
 	ClearThenGenerateSortedOptions();
-	ComboBoxString_TasksClassification->SetSelectedOption(TempText.ToString());
+	ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
 	EditableTextBox_SortName->SetVisibility(ESlateVisibility::Collapsed);
 }
 
@@ -504,7 +504,7 @@ void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FTex
 		return;
 	}
 	{
-		FString TempStr = FString::Printf(TEXT("name: %s"),*Sortname.ToString());
+		FString TempStr = FString::Printf(TEXT("name: %s"), *Sortname.ToString());
 		if (GEngine)GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Turquoise, TempStr, true, FVector2D(2, 2));
 		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 	}

@@ -28,7 +28,6 @@ DECLARE_MULTICAST_DELEGATE(OnMouseButtonEvent)
 UCLASS()
 class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 {
-	
 	template <typename Func>
 	void ExecuteForAllChildrenWithLambda(Func Function);
 
@@ -38,9 +37,9 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	void ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func);*/
 	UFUNCTION(BlueprintCallable)
 	void ButtonAddTaskOnClick();
-	
+
 	void SetVisibilityWhenSelectionChanged(UUMG_BasicTask* UMG_BasicTask, FString SelectedItem);
-	
+
 	UFUNCTION()
 	void ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 	void TaskDataTransformToTask(FTaskData InTaskData);
@@ -82,7 +81,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BPOnDailyProgressEditFinish();
-	
+
 	UFUNCTION(BlueprintCallable)
 	UPanelSlot* MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox);
 
