@@ -103,6 +103,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ScrollTheChildDown(bool IsDown, UWidget* InBasicTask);
+
 private:
 	
 	template <typename Func>

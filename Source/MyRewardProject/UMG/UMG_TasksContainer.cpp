@@ -1,3 +1,6 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
 #include "UMG_TasksContainer.h"
 #include "BFL_FunctionUtilities.h"
 #include "UMG_BasicEditer.h"
@@ -14,7 +17,6 @@
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "Components/EditableTextBox.h"
-
 
 void UUMG_TasksContainer::BroadcastBasicTaskUnselected(UUMG_BasicTask* UMG_BasicTask)
 {
@@ -77,6 +79,8 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 			}
 		}
 
+
+		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
 
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
 
@@ -176,6 +180,27 @@ void UUMG_TasksContainer::ExecuteForAllChildrenWithLambda(Func Function)
 	}
 }
 
+/*
+#include <functional>
+template <class TClass>
+void UUMG_TasksContainer::ExecuteForAllChildrenWithStdFunction(std::function<void(TClass*)> Func)
+{
+	for (UWidget* Child : ScrollBox_Tasks_Finish->GetAllChildren())
+	{
+		if (TClass* CastedChild = Cast<TClass>(Child))
+		{
+			Func(CastedChild);
+		}
+	}
+	for (UWidget* Child : ScrollBox_Tasks->GetAllChildren())
+	{
+		if (TClass* CastedChild = Cast<TClass>(Child))
+		{
+			Func(CastedChild);
+		}
+	}
+}
+*/
 void UUMG_TasksContainer::ComboBoxString_TasksClassification_OnSelectionChanged(FString SelectedItem,
 	ESelectInfo::Type SelectionType)
 {
@@ -345,8 +370,8 @@ void UUMG_TasksContainer::ChangeOption()
 	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::ChangeChildrenSortname,
 	                          EditableTextBox_SortName->GetText());
 	MySaveGIS->SaveAllData();
-	//ClearThenGenerateSortedOptions();
-	//ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
+	ClearThenGenerateSortedOptions();
+	ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
 	EditableTextBox_SortName->SetVisibility(ESlateVisibility::Collapsed);
 }
 
