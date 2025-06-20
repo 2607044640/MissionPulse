@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "Components/Widget.h"
+#include "Json.h"
+#include "JsonUtilities.h"
 #include "MySaveGIS.generated.h"
 
 class UScrollBox;
@@ -46,8 +47,7 @@ struct FTaskData
 	int64 SpawnTime;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
 	int64 ClickTime;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=JFSetting)
-	int64 EditTime;
+
 
 	FTaskData()
 	{
@@ -61,7 +61,6 @@ struct FTaskData
 		bIsAddScore = true;
 		SpawnTime = 0;
 		ClickTime = 0;
-		EditTime = 0;
 		ChangedSavedTimes = 0;
 	}
 
@@ -155,7 +154,7 @@ class MYREWARDPROJECT_API UMySaveGIS : public UGameInstanceSubsystem
 public:
 	UFUNCTION(BlueprintCallable)
 	bool IntegrateLocalAndWebToAllDataToSave(UPARAM(ref) const FString& WebSavedString);
-	void AddChildrenToBasicDatum(TArray<UWidget*> InChildren);
+	void AddChildrenToBasicDatum(UScrollBox* InScrollBox);
 
 	UFUNCTION(BlueprintCallable)
 	void SaveAllData();
@@ -171,6 +170,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetDailyProgressRewardValue();
 
+	void DelayToInitializeTasksFromGlobalData();
 
 	UPROPERTY()
 	FAllDataToSave Global_AllDataToSave;
@@ -186,9 +186,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SaveData")
 	bool SaveData(FAllDataToSave AllDataToSave);
 
-	UFUNCTION(BlueprintCallable)
-	void FetchAndParseJSON(const FString& Url);
-
+	/*
+		UFUNCTION(BlueprintCallable)
+		void FetchAndParseJSON(const FString& Url);
+	*/
 	UFUNCTION(BlueprintCallable)
 	bool AnalysisLoadedStringToAllDataToSave(FString Result, bool bParseRawData_GetRequest = false);
 	UFUNCTION(BlueprintCallable, Category = "LoadData")

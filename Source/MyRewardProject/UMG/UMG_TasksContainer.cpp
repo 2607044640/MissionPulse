@@ -18,6 +18,15 @@
 #include "MyRewardProject/GameInstanceSubsystems/MySaveGIS.h"
 #include "Components/EditableTextBox.h"
 
+
+void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
+{
+	if (!ScrollBox_Tasks_Finish->HasChild(Uumg_BasicTask))
+	{
+		ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
+	}
+}
+
 void UUMG_TasksContainer::BroadcastBasicTaskUnselected(UUMG_BasicTask* UMG_BasicTask)
 {
 	if (UMG_BasicTask->OnBasicTaskUnselected.IsBound())
@@ -82,6 +91,8 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 
 		// TempIndex = FMath::Clamp(TempIndex, 0, SelectedScrollBox->GetAllChildren().Num()-1);
 
+		SelectedScrollBox->InsertChildAt(TempIndex,InBasicTask);
+
 		MyInsertChildAt(TempIndex, InBasicTask, SelectedScrollBox);
 
 		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
@@ -102,14 +113,6 @@ void UUMG_TasksContainer::ScrollTheChildDown(bool IsDown, UWidget* InBasicTask)
 	}
 }
 
-void UUMG_TasksContainer::TaskFinish(UUMG_BasicTask* Uumg_BasicTask)
-{
-	if (!ScrollBox_Tasks_Finish->HasChild(Uumg_BasicTask))
-	{
-		ScrollBox_Tasks_Finish->AddChild(Uumg_BasicTask);
-	}
-}
-
 void UUMG_TasksContainer::TaskNotFinish(UUMG_BasicTask* Uumg_BasicTask)
 {
 	if (!ScrollBox_Tasks->HasChild(Uumg_BasicTask))
@@ -127,7 +130,8 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	SelectedBasicTask = BasicTask;
 	if (UScrollBox* SelectedScrollBox = Cast<UScrollBox>(SelectedBasicTask->GetParent()))
 	{
-		MyInsertChildAt(0, SelectedBasicTask, SelectedScrollBox);
+		SelectedScrollBox->InsertChildAt(0,SelectedBasicTask);
+		//MyInsertChildAt(0, SelectedBasicTask, SelectedScrollBox);
 		UBFL_FunctionUtilities::SortPanelWidgetsChildren(SelectedScrollBox);
 		RemoveAllSelectedBasicTask();
 	}
@@ -138,12 +142,12 @@ void UUMG_TasksContainer::ButtonAddTaskOnClick()
 	BasicTask->TaskData.Score = 10;
 	BasicTask->TaskData.SpawnTime = FDateTime::Now().GetTicks();
 	BasicTask->TaskData.ClickTime = FDateTime::Now().GetTicks();
-	BasicTask->TaskData.EditTime = FDateTime::Now().GetTicks();
 
 	BasicTask->RefreshUI();
 
 	MySaveGIS->SaveAllData();
 
+	ClearThenGenerateSortedOptions();
 	ComboBoxString_TasksClassification->SetSelectedOption(BasicTask->TaskData.SortName);
 }
 
@@ -291,6 +295,7 @@ void UUMG_TasksContainer::ClearThenGenerateSortedOptions()
 		TempOption = ComboBoxString_TasksClassification->GetSelectedOption();
 	}
 
+
 	//ComboBoxString_TasksClassification
 	ComboBoxString_TasksClassification->ClearOptions();
 
@@ -338,23 +343,14 @@ void CallAnyInAny(T* TAny, void (T::*AnyFunc)())
 template <class TClass, class TMemberFunc, class... TArgs>
 void UUMG_TasksContainer::ExecuteFP_OperateChildren(TClass* Instance, TMemberFunc Func, TArgs&&... Args)
 {
-	// Cache the children arrays to avoid multiple GetAllChildren() calls
-	const TArray<UWidget*>& TasksChildren = ScrollBox_Tasks->GetAllChildren();
-	const TArray<UWidget*>& TasksFinishChildren = ScrollBox_Tasks_Finish->GetAllChildren();
-
-	// Pre-allocate expected size
-	int32 TotalChildren = TasksChildren.Num() + TasksFinishChildren.Num();
-	if (TotalChildren == 0) return;
-
-	// Process main tasks
-	for (UWidget* Child : TasksChildren)
+	for (UWidget* Child : ScrollBox_Tasks->GetAllChildren())
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
 			(Instance->*Func)(UMG_BasicTask, std::forward<TArgs>(Args)...);
 		}
 	}
-	for (UWidget* Child : TasksFinishChildren)
+	for (UWidget* Child : ScrollBox_Tasks_Finish->GetAllChildren())
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
@@ -366,12 +362,13 @@ void UUMG_TasksContainer::ExecuteFP_OperateChildren(TClass* Instance, TMemberFun
 
 void UUMG_TasksContainer::ChangeOption()
 {
+	FText TempText = EditableTextBox_SortName->GetText();
 	//ChangeOption
 	ExecuteFP_OperateChildren(this, &UUMG_TasksContainer::ChangeChildrenSortname,
-	                          EditableTextBox_SortName->GetText());
+	                       TempText   );
 	MySaveGIS->SaveAllData();
 	ClearThenGenerateSortedOptions();
-	ComboBoxString_TasksClassification->SetSelectedOption(EditableTextBox_SortName->GetText().ToString());
+	ComboBoxString_TasksClassification->SetSelectedOption(TempText.ToString());
 	EditableTextBox_SortName->SetVisibility(ESlateVisibility::Collapsed);
 }
 
@@ -392,13 +389,18 @@ void UUMG_TasksContainer::EditableTextBox_SortNameOnTextCommitted(const FText& T
 	{
 		ChangeOption();
 	}
-	EditableTextBox_SortName->SetText(FText::FromString(""));
+	//EditableTextBox_SortName->SetText(FText::FromString(""));
 }
 
 void UUMG_TasksContainer::Button_AddSortNameOnClicked()
 {
 	bIsAddOption = true;
 	EditableTextBox_SortName->SetText(FText::FromString(""));
+	{
+		FString TempStr = FString::Printf(TEXT("Nice"));
+		if (GEngine)GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Turquoise, TempStr, true, FVector2D(2, 2));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+	}
 }
 
 void UUMG_TasksContainer::Button_ChangeSortNamesOnClicked()
@@ -493,46 +495,6 @@ void UUMG_TasksContainer::NativeConstruct()
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
 
 	RegenerateTasksFromGlobalData();
-
-	// Initialize day tracking and set timer for day change checks
-	LastCheckedDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
-	GetWorld()->GetTimerManager().SetTimer(DayCheckTimerHandle, this, &UUMG_TasksContainer::CheckForDayChange, 6.0f,
-	                                       true);
-}
-
-void UUMG_TasksContainer::CheckForDayChange()
-{
-	if (!MySaveGIS)
-	{
-		return;
-	}
-
-	int64 CurrentDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
-
-	// Check if the day has changed
-	if (LastCheckedDay != CurrentDay && CurrentDay - LastCheckedDay > 0)
-	{
-		// Calculate days passed
-		int32 DaysPassed = CurrentDay - LastCheckedDay;
-
-		// Update LastCheckedDay
-		LastCheckedDay = CurrentDay;
-
-		// Notify SaveGIS about day change (it will be stored in AnotherDay)
-		MySaveGIS->AnotherDay = DaysPassed;
-
-		FString ComboBoxString_TasksClassification_TempString(ComboBoxString_TasksClassification->GetSelectedOption());
-		//todo refocus on the page
-
-		// Regenerate UI
-		RegenerateTasksFromGlobalData();
-
-		// Save changes
-		MySaveGIS->SaveAllData();
-
-		//todo refocus on the page
-		ComboBoxString_TasksClassification->SetSelectedOption(ComboBoxString_TasksClassification_TempString);
-	}
 }
 
 void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname)
@@ -541,16 +503,20 @@ void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FTex
 	{
 		return;
 	}
+	{
+		FString TempStr = FString::Printf(TEXT("name: %s"),*Sortname.ToString());
+		if (GEngine)GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Turquoise, TempStr, true, FVector2D(2, 2));
+		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
+	}
 	BasicTask->TaskData.SortName = Sortname.ToString();
 }
-
 
 UPanelSlot* UUMG_TasksContainer::MyInsertChildAt(int32 Index, UWidget* Content, UPanelWidget* ScrollBox)
 {
 	UPanelSlot* NewSlot = ScrollBox->AddChild(Content);
 	int32 CurrentIndex = ScrollBox->GetChildIndex(Content);
-	ScrollBox->MyGetSlots().RemoveAt(CurrentIndex);
-	ScrollBox->MyGetSlots().Insert(Content->Slot, FMath::Clamp(Index, 0, ScrollBox->MyGetSlots().Num()));
+	ScrollBox->Slots.RemoveAt(CurrentIndex);
+	ScrollBox->Slots.Insert(Content->Slot, FMath::Clamp(Index, 0, ScrollBox->Slots.Num()));
 	return NewSlot;
 }
 

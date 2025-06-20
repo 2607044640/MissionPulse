@@ -133,7 +133,6 @@ public:
 
 	UFUNCTION()
 	void ButtonSelectOnClick();
-	void OnEditedText(UUMG_BasicTask* Uumg_BasicTask, FText Text);
 	virtual void NativeConstruct() override;
 	UFUNCTION()
 	void Button_FinishOnClicked();

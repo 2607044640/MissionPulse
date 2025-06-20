@@ -101,8 +101,7 @@ void UUMG_BasicTask::ButtonClicked(UUMG_BasicTask* Uumg_BasicTask)
 
 	//Save the Time(only)
 	TaskData.ClickTime = FDateTime::Now().GetTicks();
-	TaskData.EditTime = FDateTime::Now().GetTicks();
-	
+
 	MySaveGIS->SaveAllData();
 }
 
@@ -195,11 +194,6 @@ void UUMG_BasicTask::ButtonSelectOnClick()
 	}
 }
 
-void UUMG_BasicTask::OnEditedText(UUMG_BasicTask* Uumg_BasicTask, FText Text)
-{
-	TaskData.EditTime = FDateTime::Now().GetTicks();
-}
-
 void UUMG_BasicTask::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -249,14 +243,7 @@ void UUMG_BasicTask::NativeConstruct()
 	SlotScore->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotScoreOnEditFinish);
 	SlotSavedDays->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotSavedDaysOnEditFinish);
 	SlotDays->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::SlotDaysOnEditFinish);
-	
-	SlotTitle->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::OnEditedText);
-	SlotSavedTimes->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::OnEditedText);
-	SlotTimes->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::OnEditedText);
-	SlotScore->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::OnEditedText);
-	SlotSavedDays->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::OnEditedText);
-	SlotDays->OnEditFinishedCommitted.AddUObject(this, &UUMG_BasicTask::OnEditedText);
-	
+
 	//Other
 	MySaveGIS = GetWorld()->GetGameInstance()->GetSubsystem<UMySaveGIS>();
 

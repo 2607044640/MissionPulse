@@ -2,6 +2,9 @@
 
 
 #include "MySaveGIS.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "MyRewardProject/UMG/UMG_TasksContainer.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Components/ScrollBox.h"
 #include "HttpModule.h"
@@ -12,13 +15,11 @@
 #endif
 
 #include "Interfaces/IHttpResponse.h"
-#include "Kismet/GameplayStatics.h"
 #include "MyRewardProject/MyRewardProject.h"
 #include "MyRewardProject/BlueprintFunctionLibraries/BFL_GetClasses.h"
 #include "MyRewardProject/Frameworks/MyHUD.h"
 #include "MyRewardProject/UMG/UMG_BasicTask.h"
 #include "MyRewardProject/UMG/UMG_MainUI.h"
-#include "MyRewardProject/UMG/UMG_TasksContainer.h"
 
 #if !PLATFORM_ANDROID
 #include "Interfaces/IHttpRequest.h"
@@ -44,6 +45,7 @@ void UMySaveGIS::Initialize(FSubsystemCollectionBase& Collection)
  */
 bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedString)
 {
+
 	// Cache local data before integration
 	FAllDataToSave LocalData = Global_AllDataToSave;
 
@@ -158,20 +160,24 @@ bool UMySaveGIS::IntegrateLocalAndWebToAllDataToSave(const FString& WebSavedStri
 // 3. Task Management
 /**
  * Adds task widgets from a scroll box to basic data
- * @param InChildren The scroll box containing task widgets
+ * @param InScrollBox The scroll box containing task widgets
  */
-void UMySaveGIS::AddChildrenToBasicDatum(TArray<UWidget*> InChildren)
+void UMySaveGIS::AddChildrenToBasicDatum(UScrollBox* InScrollBox)
 {
-	if (!InChildren.IsValidIndex(0))
+	if (!InScrollBox || !InScrollBox->GetAllChildren().IsValidIndex(0))
 	{
 		return;
 	}
-	for (UWidget* Child : InChildren)
+
+	for (UWidget* Child : InScrollBox->GetAllChildren())
 	{
 		if (UUMG_BasicTask* UMG_BasicTask = Cast<UUMG_BasicTask>(Child))
 		{
 			// use EmplaceAt_GetRef function to construct new TaskData directly
-			Global_AllDataToSave.TaskDatum.Add(UMG_BasicTask->TaskData);
+			Global_AllDataToSave.TaskDatum.EmplaceAt(
+				Global_AllDataToSave.TaskDatum.Num(),
+				UMG_BasicTask->TaskData
+			);
 		}
 	}
 }
@@ -278,19 +284,14 @@ FString UMySaveGIS::GenerateDeviceId()
  */
 void UMySaveGIS::SaveAllData()
 {
-	Global_AllDataToSave.TaskDatum.Empty();
-
 	// Save To AllDataToSave	
 	UUMG_TasksContainer* TasksContainer = UBFL_GetClasses::GetMainUI(this)->TasksContainer;
-
-	// Process all children
-	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks->GetAllChildren());
-	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks_Finish->GetAllChildren());
+	Global_AllDataToSave.TaskDatum.Empty();
+	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks);
+	AddChildrenToBasicDatum(TasksContainer->ScrollBox_Tasks_Finish);
 
 	//Parse,Serialize
 	SaveData(Global_AllDataToSave);
-
-	//TasksContainer->ClearThenGenerateSortedOptions();
 }
 
 // 7. Score Management
@@ -300,8 +301,8 @@ void UMySaveGIS::SaveAllData()
  */
 void UMySaveGIS::AddScore(float AddNum)
 {
-	ScoreChangedBefore = Global_AllDataToSave.GlobalTotalScore;
-
+	ScoreChangedBefore=Global_AllDataToSave.GlobalTotalScore;
+	
 	Global_AllDataToSave.GlobalTotalScore += AddNum;
 	Global_AllDataToSave.GlobalDailyProgress_Saved += AddNum;
 
@@ -333,15 +334,14 @@ void UMySaveGIS::AddScore(float AddNum)
  */
 void UMySaveGIS::MinusScore(float MinusNum)
 {
-	ScoreChangedBefore = Global_AllDataToSave.GlobalTotalScore;
-
-	if (Global_AllDataToSave.GlobalTotalScore - MinusNum < 0)
+	if (Global_AllDataToSave.GlobalTotalScore-MinusNum<0)
 	{
-		Global_AllDataToSave.GlobalTotalScore -= MinusNum * PunishMultiplier;
+		Global_AllDataToSave.GlobalTotalScore-=MinusNum*PunishMultiplier;
 	}
 	else
 	{
-		Global_AllDataToSave.GlobalTotalScore -= MinusNum;
+		
+	Global_AllDataToSave.GlobalTotalScore -= MinusNum;
 	}
 }
 
@@ -368,6 +368,19 @@ float UMySaveGIS::GetDailyProgressRewardValue()
 {
 	return Global_AllDataToSave.DailyProgressRewardValue;
 }
+
+// 9. Task Initialization
+/**
+ * Initializes tasks from global data with delay
+ */
+void UMySaveGIS::DelayToInitializeTasksFromGlobalData()
+{
+	if (AMyHUD* MyHUD = Cast<AMyHUD>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
+	{
+		MyHUD->MainUI->TasksContainer->RegenerateTasksFromGlobalData();
+	}
+}
+
 
 // 10. Data Serialization
 /**
@@ -400,7 +413,6 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 
 		TaskObject->SetStringField(TEXT("SpawnTime"), FString::Printf(TEXT("%lld"), TaskData.SpawnTime));
 		TaskObject->SetStringField(TEXT("ClickTime"), FString::Printf(TEXT("%lld"), TaskData.ClickTime));
-		TaskObject->SetStringField(TEXT("EditTime"), FString::Printf(TEXT("%lld"), TaskData.EditTime));
 
 		TaskDatumJsonValues.Add(MakeShareable(new FJsonValueObject(TaskObject)));
 	}
@@ -409,7 +421,7 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	//Devices
 
 	TArray<TSharedPtr<FJsonValue>> DevicesArray;
-	for (const FDevice& Device : Global_AllDataToSave.Devices)
+	for (const FDevice& Device : AllDataToSave.Devices)
 	{
 		TSharedPtr<FJsonObject> DeviceObj = MakeShareable(new FJsonObject);
 		DeviceObj->SetStringField(TEXT("DeviceID"), Device.DeviceID);
@@ -422,19 +434,17 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	TArray<TSharedPtr<FJsonValue>> OtherJsonValues;
 	TSharedPtr<FJsonObject> OtherJsonObject(new FJsonObject);
 
-	OtherJsonObject->SetNumberField(
-		TEXT("GlobalDayToRecord"), GetDateTimeTodayTicks() / ETimespan::TicksPerDay);
-	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), Global_AllDataToSave.GlobalTotalScore);
-	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
-	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress_Saved"), Global_AllDataToSave.GlobalDailyProgress_Saved);
-	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), Global_AllDataToSave.GlobalDailyProgress);
-	OtherJsonObject->SetNumberField(TEXT("DailyProgressRewardValue"), Global_AllDataToSave.DailyProgressRewardValue);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDayToRecord"), GetDateTimeTodayTicks() / ETimespan::TicksPerDay);
+	OtherJsonObject->SetNumberField(TEXT("GlobalTotalScore"), AllDataToSave.GlobalTotalScore);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress"), AllDataToSave.GlobalDailyProgress);
+	OtherJsonObject->SetNumberField(TEXT("GlobalDailyProgress_Saved"), AllDataToSave.GlobalDailyProgress_Saved);
+	OtherJsonObject->SetNumberField(TEXT("DailyProgressRewardValue"), AllDataToSave.DailyProgressRewardValue);
 
-	OtherJsonObject->SetStringField(TEXT("URL"), Global_AllDataToSave.URL);
-	OtherJsonObject->SetStringField(TEXT("AuthorizationName"), Global_AllDataToSave.AuthorizationName);
-	OtherJsonObject->SetStringField(TEXT("AuthorizationValue"), Global_AllDataToSave.AuthorizationValue);
-	OtherJsonObject->SetStringField(TEXT("ContentTypeName"), Global_AllDataToSave.ContentTypeName);
-	OtherJsonObject->SetStringField(TEXT("ContentTypeValue"), Global_AllDataToSave.ContentTypeValue);
+	OtherJsonObject->SetStringField(TEXT("URL"), AllDataToSave.URL);
+	OtherJsonObject->SetStringField(TEXT("AuthorizationName"), AllDataToSave.AuthorizationName);
+	OtherJsonObject->SetStringField(TEXT("AuthorizationValue"), AllDataToSave.AuthorizationValue);
+	OtherJsonObject->SetStringField(TEXT("ContentTypeName"), AllDataToSave.ContentTypeName);
+	OtherJsonObject->SetStringField(TEXT("ContentTypeValue"), AllDataToSave.ContentTypeValue);
 
 	OtherJsonValues.Add(MakeShareable(new FJsonValueObject(OtherJsonObject)));
 
@@ -461,11 +471,12 @@ bool UMySaveGIS::SaveData(FAllDataToSave AllDataToSave)
 	return false;
 }
 
+
 // 11. Network Operations
 /**
  * Fetches and parses JSON data from URL
  * @param Url Source URL for JSON data
- */
+ *
 void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 {
 	// Create the HTTP request
@@ -526,15 +537,9 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 						}
 					}
 
-					FTimerHandle CustomTimerHandle;
-					GetWorld()->GetTimerManager().SetTimer(CustomTimerHandle, [&]()
-					{
-						if (AMyHUD* MyHUD = Cast<AMyHUD>
-							(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetHUD()))
-						{
-							MyHUD->MainUI->TasksContainer->RegenerateTasksFromGlobalData();
-						}
-					}, 0.5f, false);
+					FTimerHandle TempHandle;
+					GetWorld()->GetTimerManager().SetTimer(TempHandle, this,
+					                                       &UMySaveGIS::DelayToInitializeTasksFromGlobalData, 0.5f);
 				}
 				else
 				{
@@ -549,7 +554,7 @@ void UMySaveGIS::FetchAndParseJSON(const FString& Url)
 	HttpRequest->SetVerb("GET");
 	HttpRequest->ProcessRequest();
 }
-
+*/
 /**
  * Analyzes loaded string data and converts to game data
  * @param Result JSON string to analyze
@@ -631,7 +636,6 @@ bool UMySaveGIS::AnalysisLoadedStringToAllDataToSave(FString Result, bool bParse
 					TaskData.bIsAddScore = TaskObject->GetBoolField(TEXT("bIsAddScore"));
 					TaskData.SpawnTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("SpawnTime")));
 					TaskData.ClickTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("ClickTime")));
-					TaskData.EditTime = FCString::Atoi64(*TaskObject->GetStringField(TEXT("EditTime")));
 
 					Global_AllDataToSave.TaskDatum.Add(TaskData);
 				}
