@@ -495,6 +495,39 @@ void UUMG_TasksContainer::NativeConstruct()
 	ButtonAddTask->OnReleased.AddDynamic(this, &ThisClass::ButtonAddTaskOnClick);
 
 	RegenerateTasksFromGlobalData();
+
+// Initialize day tracking and set timer for day change checks
+LastCheckedDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
+	GetWorld()->GetTimerManager().SetTimer(DayCheckTimerHandle, this, &UUMG_TasksContainer::CheckForDayChange, 6.0f, true);
+}
+
+void UUMG_TasksContainer::CheckForDayChange()
+{
+	if (!MySaveGIS)
+	{
+		return;
+	}
+	
+	int64 CurrentDay = MySaveGIS->GetDateTimeTodayTicks() / ETimespan::TicksPerDay;
+	
+	// Check if the day has changed
+	if (LastCheckedDay != CurrentDay && CurrentDay - LastCheckedDay > 0)
+	{
+		// Calculate days passed
+		int32 DaysPassed = CurrentDay - LastCheckedDay;
+		
+		// Update LastCheckedDay
+		LastCheckedDay = CurrentDay;
+		
+		// Notify SaveGIS about day change (it will be stored in AnotherDay)
+		MySaveGIS->AnotherDay = DaysPassed;
+	
+		// Regenerate UI
+		RegenerateTasksFromGlobalData();
+		
+		// Save changes
+		MySaveGIS->SaveAllData();
+	}
 }
 
 void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FText Sortname)
@@ -502,11 +535,6 @@ void UUMG_TasksContainer::ChangeChildrenSortname(UUMG_BasicTask* BasicTask, FTex
 	if (BasicTask->GetVisibility() == ESlateVisibility::Collapsed)
 	{
 		return;
-	}
-	{
-		FString TempStr = FString::Printf(TEXT("name: %s"), *Sortname.ToString());
-		if (GEngine)GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Turquoise, TempStr, true, FVector2D(2, 2));
-		UE_LOG(LogTemp, Error, TEXT("%s"), *TempStr);
 	}
 	BasicTask->TaskData.SortName = Sortname.ToString();
 }

@@ -63,10 +63,13 @@ class MYREWARDPROJECT_API UUMG_TasksContainer : public UUserWidget
 	UFUNCTION()
 	void ButtonChangeSortName_TaskOnClick1();
 	virtual void NativeConstruct() override;
+	void CheckForDayChange();
 	bool bIsChangeSortName_Task;
 	UPROPERTY()
 	UUMG_BasicTask* TempSelectedBasicTask;
 	FString TempStringRecorderForSelection;
+	int64 LastCheckedDay;
+	FTimerHandle DayCheckTimerHandle;
 
 public:
 	UFUNCTION(BlueprintCallable)
